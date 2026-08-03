@@ -1,0 +1,81 @@
+[project]
+name = "tessa-api"
+version = "0.1.0"
+description = "Tessa API: FastAPI service for targets, bundles, runs and streams"
+readme = "README.md"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.34",
+    "pydantic-settings>=2.7",
+    "sqlalchemy[asyncio]>=2.0.36",
+    "asyncpg>=0.30",
+    "alembic>=1.14",
+    "pgvector>=0.3.6",
+    "pyjwt>=2.10",
+    "argon2-cffi>=23.1",
+    "uuid-utils>=0.10",
+    "temporalio>=1.8",
+    "httpx>=0.28",
+    "pyyaml>=6.0",
+    "tzdata>=2024.2",
+    "cryptography>=44",
+    "python-multipart>=0.0.20",
+    "sqlglot==30.21.0",
+    "jsonschema>=4.23",
+    "prometheus-client==0.26.0",
+    "jinja2==3.1.6",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.25",
+    "respx>=0.22",
+    "ruff>=0.9",
+    "mypy>=1.14",
+    "types-pyyaml>=6.0",
+    "types-jsonschema>=4.23",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["tessa_api"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "B", "UP", "ASYNC", "SIM", "RUF", "PT", "C4"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["tessa_api"]
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+plugins = ["pydantic.mypy"]
+files = ["tessa_api", "scripts", "tests", "alembic"]
+explicit_package_bases = true
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = "--strict-markers -ra"
+markers = [
+    "integration: needs the compose Postgres database tessa_test",
+]
+filterwarnings = ["error::DeprecationWarning:tessa_api"]
+
+[[tool.mypy.overrides]]
+module = ["asyncpg", "asyncpg.*"]
+ignore_missing_imports = true
