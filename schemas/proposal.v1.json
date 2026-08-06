@@ -1,0 +1,402 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "proposal.v1.json",
+  "title": "Tessa test proposal",
+  "description": "The tessa/proposal.yaml file: the areas of an app worth testing, ranked by risk, with the reasons and what each test needs. Tessa shows it to the team, which ticks the items to author. Unknown keys are errors. Never write a secret.",
+  "$defs": {
+    "Confidence": {
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "title": "Confidence",
+      "type": "string"
+    },
+    "Depth": {
+      "enum": [
+        "smoke",
+        "standard",
+        "deep"
+      ],
+      "title": "Depth",
+      "type": "string"
+    },
+    "ProposalEstimate": {
+      "additionalProperties": false,
+      "description": "Rough size of the tests the item asks for.",
+      "properties": {
+        "scenarios": {
+          "description": "scenarios the item would add",
+          "maximum": 50,
+          "minimum": 1,
+          "title": "Scenarios",
+          "type": "integer"
+        },
+        "minutes": {
+          "description": "minutes one run of those scenarios takes",
+          "maximum": 600,
+          "minimum": 1,
+          "title": "Minutes",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "scenarios",
+        "minutes"
+      ],
+      "title": "Estimate",
+      "type": "object"
+    },
+    "ProposalItemDoc": {
+      "additionalProperties": false,
+      "description": "One thing worth testing: where it lives, how to test it, how risky it is and why.",
+      "properties": {
+        "key": {
+          "description": "stable slug of the item; a later proposal that keeps the key keeps the ticks and notes the team made on it",
+          "pattern": "^[a-z0-9][a-z0-9_.-]{2,79}$",
+          "title": "Key",
+          "type": "string"
+        },
+        "title": {
+          "description": "one line a person understands",
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "area": {
+          "description": "catalog area the item belongs to",
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Area",
+          "type": "string"
+        },
+        "feature_ids": {
+          "description": "ids of manifest features the item covers; an id that is not in the latest bundle lowers the confidence of the item",
+          "items": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+            "type": "string"
+          },
+          "maxItems": 20,
+          "minItems": 1,
+          "title": "Feature Ids",
+          "type": "array"
+        },
+        "interface_id": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "manifest interface the item targets; absent means every interface of the features",
+          "title": "Interface Id"
+        },
+        "kind": {
+          "$ref": "#/$defs/ProposalKind",
+          "description": "how the item would be tested",
+          "title": "kind"
+        },
+        "risk": {
+          "$ref": "#/$defs/ProposalRisk",
+          "description": "how much a defect here would hurt",
+          "title": "risk"
+        },
+        "reasons": {
+          "description": "why it ranks where it does",
+          "items": {
+            "$ref": "#/$defs/ProposalItemReason"
+          },
+          "maxItems": 6,
+          "minItems": 1,
+          "title": "Reasons",
+          "type": "array"
+        },
+        "needs": {
+          "description": "what the tests need before they can run",
+          "items": {
+            "$ref": "#/$defs/ProposalNeed"
+          },
+          "maxItems": 6,
+          "title": "Needs",
+          "type": "array"
+        },
+        "depth": {
+          "$ref": "#/$defs/Depth",
+          "description": "depth a run of the item should use",
+          "title": "depth"
+        },
+        "estimate": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ProposalEstimate"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "estimate"
+        },
+        "confidence": {
+          "$ref": "#/$defs/Confidence",
+          "description": "how sure the proposal is about the item",
+          "title": "confidence"
+        },
+        "evidence": {
+          "anyOf": [
+            {
+              "maxLength": 500,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "where in the code the reasons come from, as files, symbols or commits",
+          "title": "Evidence"
+        }
+      },
+      "required": [
+        "key",
+        "title",
+        "area",
+        "feature_ids",
+        "kind",
+        "risk",
+        "reasons",
+        "depth",
+        "confidence"
+      ],
+      "title": "Proposal item",
+      "type": "object"
+    },
+    "ProposalItemReason": {
+      "additionalProperties": false,
+      "description": "One reason the area deserves a test, from a closed list of codes.",
+      "properties": {
+        "code": {
+          "$ref": "#/$defs/ProposalReason",
+          "description": "why the area is worth testing",
+          "title": "code"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "maxLength": 300,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "what in the repository shows it, for example a file, a commit or a count",
+          "title": "Note"
+        }
+      },
+      "required": [
+        "code"
+      ],
+      "title": "Reason",
+      "type": "object"
+    },
+    "ProposalKind": {
+      "enum": [
+        "api",
+        "browser",
+        "stream",
+        "webhook",
+        "pipeline",
+        "contract",
+        "integration"
+      ],
+      "title": "ProposalKind",
+      "type": "string"
+    },
+    "ProposalNeed": {
+      "enum": [
+        "seed",
+        "db_read",
+        "hook",
+        "flag",
+        "fixture",
+        "credentials"
+      ],
+      "title": "ProposalNeed",
+      "type": "string"
+    },
+    "ProposalReason": {
+      "enum": [
+        "recent_change",
+        "no_unit_tests",
+        "auth_path",
+        "money_path",
+        "migration",
+        "complexity",
+        "bug_history",
+        "external_dependency",
+        "user_visible"
+      ],
+      "title": "ProposalReason",
+      "type": "string"
+    },
+    "ProposalRisk": {
+      "enum": [
+        "high",
+        "medium",
+        "low"
+      ],
+      "title": "ProposalRisk",
+      "type": "string"
+    },
+    "SourceSection": {
+      "additionalProperties": true,
+      "description": "The commit of the repository the bundle was produced from, so a failure can be tied to the code that was read.",
+      "properties": {
+        "commit": {
+          "description": "Commit the bundle describes, as 7 to 40 lowercase hex digits (git rev-parse HEAD).",
+          "examples": [
+            "3f9c2ab41d7e"
+          ],
+          "pattern": "^[0-9a-f]{7,40}$",
+          "title": "Commit",
+          "type": "string",
+          "x-ui": {
+            "group": "Identity",
+            "label": "Commit",
+            "order": 1,
+            "widget": "text"
+          }
+        },
+        "branch": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Branch that was checked out.",
+          "examples": [
+            "main"
+          ],
+          "title": "Branch",
+          "x-ui": {
+            "group": "Identity",
+            "label": "Branch",
+            "order": 2,
+            "widget": "text"
+          }
+        },
+        "dirty": {
+          "default": false,
+          "description": "True when the working tree had changes that were not committed.",
+          "examples": [
+            false
+          ],
+          "title": "Dirty",
+          "type": "boolean",
+          "x-ui": {
+            "group": "Identity",
+            "label": "Dirty",
+            "order": 3,
+            "widget": "toggle"
+          }
+        }
+      },
+      "required": [
+        "commit"
+      ],
+      "title": "Source",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "description": "URL of this schema; Tessa fills it into the Propose prompt",
+      "examples": [
+        "http://localhost:8000/schemas/proposal.v1.json"
+      ],
+      "pattern": "^https?://[^\\s/]+(/\\S*)?/schemas/proposal\\.v1\\.json$",
+      "title": "Schema",
+      "type": "string"
+    },
+    "target_token": {
+      "description": "routing token of the target the proposal is for",
+      "examples": [
+        "tgt_abcdefghijklmnopqrstuv"
+      ],
+      "pattern": "^tgt_[a-z2-7]{22}$",
+      "title": "Target Token",
+      "type": "string"
+    },
+    "generated_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "when the proposal was written, with a UTC offset",
+      "title": "Generated At"
+    },
+    "source": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/SourceSection"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "commit of the repository the proposal describes",
+      "title": "source"
+    },
+    "authored_from": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "id of the Propose prompt issue the proposal answers",
+      "title": "Authored From"
+    },
+    "items": {
+      "description": "the items, riskiest first",
+      "items": {
+        "$ref": "#/$defs/ProposalItemDoc"
+      },
+      "maxItems": 200,
+      "minItems": 1,
+      "title": "Items",
+      "type": "array"
+    }
+  },
+  "required": [
+    "schema",
+    "target_token",
+    "items"
+  ],
+  "type": "object"
+}

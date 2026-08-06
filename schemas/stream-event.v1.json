@@ -1,0 +1,4309 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "stream-event.v1.json",
+  "title": "Tessa stream event",
+  "description": "Envelope and payload union of every event on the run stream.",
+  "$defs": {
+    "AdapterKind": {
+      "enum": [
+        "http",
+        "sse",
+        "websocket",
+        "graphql",
+        "browser"
+      ],
+      "title": "AdapterKind",
+      "type": "string"
+    },
+    "AgentSessionChangedEvent": {
+      "properties": {
+        "run_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "run the event belongs to; null for feed-only events",
+          "title": "Run Id"
+        },
+        "seq": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "per-run sequence from 1; null for ephemeral events",
+          "title": "Seq"
+        },
+        "ts": {
+          "description": "event time reported by the producer",
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "type": {
+          "const": "agent_session.changed",
+          "title": "Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/AgentSessionChangedPayload"
+        }
+      },
+      "required": [
+        "run_id",
+        "seq",
+        "ts",
+        "type",
+        "payload"
+      ],
+      "title": "AgentSessionChangedEvent",
+      "type": "object"
+    },
+    "AgentSessionChangedPayload": {
+      "properties": {
+        "agent_session_id": {
+          "description": "Claude Code session that started, moved or ended",
+          "format": "uuid",
+          "title": "Agent Session Id",
+          "type": "string"
+        },
+        "user_id": {
+          "description": "user the session belongs to",
+          "format": "uuid",
+          "title": "User Id",
+          "type": "string"
+        },
+        "target_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "target the session works on, when it has one",
+          "title": "Target Id"
+        },
+        "active": {
+          "description": "false once the session ended",
+          "title": "Active",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "agent_session_id",
+        "user_id",
+        "target_id",
+        "active"
+      ],
+      "title": "AgentSessionChangedPayload",
+      "type": "object"
+    },
+    "AttemptTally": {
+      "properties": {
+        "passed": {
+          "description": "attempts that passed",
+          "minimum": 0,
+          "title": "Passed",
+          "type": "integer"
+        },
+        "failed": {
+          "description": "attempts that failed",
+          "minimum": 0,
+          "title": "Failed",
+          "type": "integer"
+        },
+        "total": {
+          "description": "attempts planned for the scenario",
+          "minimum": 0,
+          "title": "Total",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "passed",
+        "failed",
+        "total"
+      ],
+      "title": "AttemptTally",
+      "type": "object"
+    },
+    "BrowserSessionEndedEvent": {
+      "properties": {
+        "run_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "run the event belongs to; null for feed-only events",
+          "title": "Run Id"
+        },
+        "seq": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "per-run sequence from 1; null for ephemeral events",
+          "title": "Seq"
+        },
+        "ts": {
+          "description": "event time reported by the producer",
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "type": {
+          "const": "browser_session.ended",
+          "title": "Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/BrowserSessionEndedPayload"
+        }
+      },
+      "required": [
+        "run_id",
+        "seq",
+        "ts",
+        "type",
+        "payload"
+      ],
+      "title": "BrowserSessionEndedEvent",
+      "type": "object"
+    },
+    "BrowserSessionEndedPayload": {
+      "properties": {
+        "browser_session_id": {
+          "description": "browser session that ended",
+          "format": "uuid",
+          "title": "Browser Session Id",
+          "type": "string"
+        },
+        "run_scenario_id": {
+          "description": "run scenario the session belongs to",
+          "format": "uuid",
+          "title": "Run Scenario Id",
+          "type": "string"
+        },
+        "has_recording": {
+          "description": "true when a recording was filed",
+          "title": "Has Recording",
+          "type": "boolean"
+        },
+        "has_trace": {
+          "description": "true when a trace was filed",
+          "title": "Has Trace",
+          "type": "boolean"
+        },
+        "ended_at": {
+          "description": "when the session ended",
+          "format": "date-time",
+          "title": "Ended At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "browser_session_id",
+        "run_scenario_id",
+        "has_recording",
+        "has_trace",
+        "ended_at"
+      ],
+      "title": "BrowserSessionEndedPayload",
+      "type": "object"
+    },
+    "BrowserSessionStartedEvent": {
+      "properties": {
+        "run_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "run the event belongs to; null for feed-only events",
+          "title": "Run Id"
+        },
+        "seq": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "per-run sequence from 1; null for ephemeral events",
+          "title": "Seq"
+        },
+        "ts": {
+          "description": "event time reported by the producer",
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "type": {
+          "const": "browser_session.started",
+          "title": "Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/BrowserSessionStartedPayload"
+        }
+      },
+      "required": [
+        "run_id",
+        "seq",
+        "ts",
+        "type",
+        "payload"
+      ],
+      "title": "BrowserSessionStartedEvent",
+      "type": "object"
+    },
+    "BrowserSessionStartedPayload": {
+      "properties": {
+        "browser_session_id": {
+          "description": "browser session that started",
+          "format": "uuid",
+          "title": "Browser Session Id",
+          "type": "string"
+        },
+        "run_scenario_id": {
+          "description": "run scenario the session belongs to",
+          "format": "uuid",
+          "title": "Run Scenario Id",
+          "type": "string"
+        },
+        "attempt": {
+          "description": "attempt number from 0",
+          "title": "Attempt",
+          "type": "integer"
+        },
+        "viewport": {
+          "$ref": "#/$defs/Viewport",
+          "description": "size of the browser viewport"
+        },
+        "scenario_title": {
+          "description": "scenario title shown on the tile",
+          "title": "Scenario Title",
+          "type": "string"
+        },
+        "started_at": {
+          "description": "when the session started",
+          "format": "date-time",
+          "title": "Started At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "browser_session_id",
+        "run_scenario_id",
+        "attempt",
+        "viewport",
+        "scenario_title",
+        "started_at"
+      ],
+      "title": "BrowserSessionStartedPayload",
+      "type": "object"
+    },
+    "BudgetExhaustedEvent": {
+      "properties": {
+        "run_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "run the event belongs to; null for feed-only events",
+          "title": "Run Id"
+        },
+        "seq": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "per-run sequence from 1; null for ephemeral events",
+          "title": "Seq"
+        },
+        "ts": {
+          "description": "event time reported by the producer",
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "type": {
+          "const": "budget.exhausted",
+          "title": "Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/BudgetExhaustedPayload"
+        }
+      },
+      "required": [
+        "run_id",
+        "seq",
+        "ts",
+        "type",
+        "payload"
+      ],
+      "title": "BudgetExhaustedEvent",
+      "type": "object"
+    },
+    "BudgetExhaustedPayload": {
+      "properties": {
+        "dimension": {
+          "description": "which budget ran out",
+          "enum": [
+            "usd",
+            "minutes"
+          ],
+          "title": "Dimension",
+          "type": "string"
+        },
+        "limit": {
+          "description": "the ceiling that was reached",
+          "title": "Limit",
+          "type": "number"
+        },
+        "actual": {
+          "description": "the amount used when the ceiling was reached",
+          "title": "Actual",
+          "type": "number"
+        }
+      },
+      "required": [
+        "dimension",
+        "limit",
+        "actual"
+      ],
+      "title": "BudgetExhaustedPayload",
+      "type": "object"
+    },
+    "BudgetState": {
+      "properties": {
+        "max_usd": {
+          "description": "spend ceiling in USD",
+          "minimum": 0,
+          "title": "Max Usd",
+          "type": "number"
+        },
+        "spent_usd": {
+          "description": "spent so far in USD",
+          "minimum": 0,
+          "title": "Spent Usd",
+          "type": "number"
+        },
+        "max_minutes": {
+          "description": "wall clock ceiling in minutes",
+          "minimum": 1,
+          "title": "Max Minutes",
+          "type": "integer"
+        },
+        "elapsed_ms": {
+          "description": "wall clock used so far in milliseconds",
+          "minimum": 0,
+          "title": "Elapsed Ms",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "max_usd",
+        "spent_usd",
+        "max_minutes",
+        "elapsed_ms"
+      ],
+      "title": "BudgetState",
+      "type": "object"
+    },
+    "BudgetUpdatedEvent": {
+      "properties": {
+        "run_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "run the event belongs to; null for feed-only events",
+          "title": "Run Id"
+        },
+        "seq": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "per-run sequence from 1; null for ephemeral events",
+          "title": "Seq"
+        },
+        "ts": {
+          "description": "event time reported by the producer",
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "type": {
+          "const": "budget.updated",
+          "title": "Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/BudgetState"
+        }
+      },
+      "required": [
+        "run_id",
+        "seq",
+        "ts",
+        "type",
+        "payload"
+      ],
+      "title": "BudgetUpdatedEvent",
+      "type": "object"
+    },
+    "CoverageUpdateReason": {
+      "enum": [
+        "generated",
+        "run",
+        "review"
+      ],
+      "title": "CoverageUpdateReason",
+      "type": "string"
+    },
+    "CoverageUpdatedEvent": {
+      "properties": {
+        "run_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "run the event belongs to; null for feed-only events",
+          "title": "Run Id"
+        },
+        "seq": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "per-run sequence from 1; null for ephemeral events",
+          "title": "Seq"
+        },
+        "ts": {
+          "description": "event time reported by the producer",
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "type": {
+          "const": "coverage.updated",
+          "title": "Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/CoverageUpdatedPayload"
+        }
+      },
+      "required": [
+        "run_id",
+        "seq",
+        "ts",
+        "type",
+        "payload"
+      ],
+      "title": "CoverageUpdatedEvent",
+      "type": "object"
+    },
+    "CoverageUpdatedPayload": {
+      "properties": {
+        "target_id": {
+          "description": "target whose coverage changed",
+          "format": "uuid",
+          "title": "Target Id",
+          "type": "string"
+        },
+        "plan_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "plan the cells belong to",
+          "title": "Plan Id"
+        },
+        "cell_ids": {
+          "description": "cells whose status or scenario count changed",
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": "Cell Ids",
+          "type": "array"
+        },
+        "reason": {
+          "$ref": "#/$defs/CoverageUpdateReason",
+          "description": "what changed the cells"
+        }
+      },
+      "required": [
+        "target_id",
+        "plan_id",
+        "cell_ids",
+        "reason"
+      ],
+      "title": "CoverageUpdatedPayload",
+      "type": "object"
+    },
+    "DashboardInvalidateEvent": {
+      "properties": {
+        "run_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "run the event belongs to; null for feed-only events",
+          "title": "Run Id"
+        },
+        "seq": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "per-run sequence from 1; null for ephemeral events",
+          "title": "Seq"
+        },
+        "ts": {
+          "description": "event time reported by the producer",
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "type": {
+          "const": "dashboard.invalidate",
+          "title": "Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/DashboardInvalidatePayload"
+        }
+      },
+      "required": [
+        "run_id",
+        "seq",
+        "ts",
+        "type",
+        "payload"
+      ],
+      "title": "DashboardInvalidateEvent",
+      "type": "object"
+    },
+    "DashboardInvalidatePayload": {
+      "additionalProperties": false,
+      "properties": {},
+      "title": "DashboardInvalidatePayload",
+      "type": "object"
+    },
+    "ExploreActionEvent": {
+      "properties": {
+        "run_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "run the event belongs to; null for feed-only events",
+          "title": "Run Id"
+        },
+        "seq": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "per-run sequence from 1; null for ephemeral events",
+          "title": "Seq"
+        },
+        "ts": {
+          "description": "event time reported by the producer",
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "type": {
+          "const": "explore.action",
+          "title": "Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/ExploreActionPayload"
+        }
+      },
+      "required": [
+        "run_id",
+        "seq",
+        "ts",
+        "type",
+        "payload"
+      ],
+      "title": "ExploreActionEvent",
+      "type": "object"
+    },
+    "ExploreActionKind": {
+      "enum": [
+        "navigate",
+        "click",
+        "type",
+        "read",
+        "finish"
+      ],
+      "title": "ExploreActionKind",
+      "type": "string"
+    },
+    "ExploreActionPayload": {
+      "properties": {
+        "index": {
+          "description": "position of the action in the exploration from 0",
+          "minimum": 0,
+          "title": "Index",
+          "type": "integer"
+        },
+        "action": {
+          "$ref": "#/$defs/ExploreActionKind",
+          "description": "kind of action the explorer took"
+        },
+        "target": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "role and name of the element the action addressed",
+          "title": "Target"
+        },
+        "text": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "text typed or read, redacted",
+          "title": "Text"
+        },
+        "url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "address navigated to",
+          "title": "Url"
+        },
+        "rationale": {
+          "description": "why the explorer chose the action",
+          "title": "Rationale",
+          "type": "string"
+        }
+      },
+      "required": [
+        "index",
+        "action",
+        "target",
+        "text",
+        "url",
+        "rationale"
+      ],
+      "title": "ExploreActionPayload",
+      "type": "object"
+    },
+    "ExploreCandidateEvent": {
+      "properties": {
+        "run_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "run the event belongs to; null for feed-only events",
+          "title": "Run Id"
+        },
+        "seq": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "per-run sequence from 1; null for ephemeral events",
+          "title": "Seq"
+        },
+        "ts": {
+          "description": "event time reported by the producer",
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "type": {
+          "const": "explore.candidate",
+          "title": "Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/ExploreCandidatePayload"
+        }
+      },
+      "required": [
+        "run_id",
+        "seq",
+        "ts",
+        "type",
+        "payload"
+      ],
+      "title": "ExploreCandidateEvent",
+      "type": "object"
+    },
+    "ExploreCandidatePayload": {
+      "properties": {
+        "candidate_id": {
+          "description": "candidate finding awaiting verification",
+          "format": "uuid",
+          "title": "Candidate Id",
+          "type": "string"
+        },
+        "description": {
+          "description": "what the detector or the explorer claims happened",
+          "title": "Description",
+          "type": "string"
+        },
+        "from_index": {
+          "description": "first recorded action the candidate depends on",
+          "minimum": 0,
+          "title": "From Index",
+          "type": "integer"
+        },
+        "to_index": {
+          "description": "last recorded action the candidate depends on",
+          "minimum": 0,
+          "title": "To Index",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "candidate_id",
+        "description",
+        "from_index",
+        "to_index"
+      ],
+      "title": "ExploreCandidatePayload",
+      "type": "object"
+    },
+    "ExploreVerifiedEvent": {
+      "properties": {
+        "run_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "run the event belongs to; null for feed-only events",
+          "title": "Run Id"
+        },
+        "seq": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "per-run sequence from 1; null for ephemeral events",
+          "title": "Seq"
+        },
+        "ts": {
+          "description": "event time reported by the producer",
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "type": {
+          "const": "explore.verified",
+          "title": "Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/ExploreVerifiedPayload"
+        }
+      },
+      "required": [
+        "run_id",
+        "seq",
+        "ts",
+        "type",
+        "payload"
+      ],
+      "title": "ExploreVerifiedEvent",
+      "type": "object"
+    },
+    "ExploreVerifiedPayload": {
+      "properties": {
+        "candidate_id": {
+          "description": "candidate that was replayed",
+          "format": "uuid",
+          "title": "Candidate Id",
+          "type": "string"
+        },
+        "verified": {
+          "description": "true when every required replay reproduced it",
+          "title": "Verified",
+          "type": "boolean"
+        },
+        "replay_run_scenario_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "run scenario of the last verification replay",
+          "title": "Replay Run Scenario Id"
+        },
+        "finding_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "finding created for a verified candidate",
+          "title": "Finding Id"
+        }
+      },
+      "required": [
+        "candidate_id",
+        "verified",
+        "replay_run_scenario_id",
+        "finding_id"
+      ],
+      "title": "ExploreVerifiedPayload",
+      "type": "object"
+    },
+    "FeedName": {
+      "enum": [
+        "runs",
+        "home",
+        "coverage",
+        "findings"
+      ],
+      "title": "FeedName",
+      "type": "string"
+    },
+    "FindingChange": {
+      "properties": {
+        "from": {
+          "$ref": "#/$defs/JsonValue",
+          "description": "value before the change"
+        },
+        "to": {
+          "$ref": "#/$defs/JsonValue",
+          "description": "value after the change"
+        }
+      },
+      "required": [
+        "from",
+        "to"
+      ],
+      "title": "FindingChange",
+      "type": "object"
+    },
+    "FindingClass": {
+      "enum": [
+        "wrong_result",
+        "invariant_violation",
+        "server_error",
+        "security_boundary",
+        "safety_claim",
+        "performance",
+        "accessibility",
+        "flaky",
+        "contract",
+        "harness"
+      ],
+      "title": "FindingClass",
+      "type": "string"
+    },
+    "FindingCreatedEvent": {
+      "properties": {
+        "run_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "run the event belongs to; null for feed-only events",
+          "title": "Run Id"
+        },
+        "seq": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "per-run sequence from 1; null for ephemeral events",
+          "title": "Seq"
+        },
+        "ts": {
+          "description": "event time reported by the producer",
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "type": {
+          "const": "finding.created",
+          "title": "Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/FindingCreatedPayload"
+        }
+      },
+      "required": [
+        "run_id",
+        "seq",
+        "ts",
+        "type",
+        "payload"
+      ],
+      "title": "FindingCreatedEvent",
+      "type": "object"
+    },
+    "FindingCreatedPayload": {
+      "properties": {
+        "finding_id": {
+          "description": "finding the event reports",
+          "format": "uuid",
+          "title": "Finding Id",
+          "type": "string"
+        },
+        "title": {
+          "description": "finding title",
+          "title": "Title",
+          "type": "string"
+        },
+        "class": {
+          "$ref": "#/$defs/FindingClass",
+          "description": "finding class"
+        },
+        "severity": {
+          "$ref": "#/$defs/Severity",
+          "description": "finding severity"
+        },
+        "status": {
+          "$ref": "#/$defs/FindingStatus",
+          "description": "status at creation"
+        },
+        "fingerprint": {
+          "description": "fingerprint the finding was matched or created by",
+          "title": "Fingerprint",
+          "type": "string"
+        },
+        "is_new": {
+          "description": "false when an existing finding was matched",
+          "title": "Is New",
+          "type": "boolean"
+        },
+        "scenario_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "scenario that produced the finding",
+          "title": "Scenario Id"
+        }
+      },
+      "required": [
+        "finding_id",
+        "title",
+        "class",
+        "severity",
+        "status",
+        "fingerprint",
+        "is_new",
+        "scenario_id"
+      ],
+      "title": "FindingCreatedPayload",
+      "type": "object"
+    },
+    "FindingOccurrenceAddedEvent": {
+      "properties": {
+        "run_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "run the event belongs to; null for feed-only events",
+          "title": "Run Id"
+        },
+        "seq": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "per-run sequence from 1; null for ephemeral events",
+          "title": "Seq"
+        },
+        "ts": {
+          "description": "event time reported by the producer",
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "type": {
+          "const": "finding.occurrence_added",
+          "title": "Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/FindingOccurrenceAddedPayload"
+        }
+      },
+      "required": [
+        "run_id",
+        "seq",
+        "ts",
+        "type",
+        "payload"
+      ],
+      "title": "FindingOccurrenceAddedEvent",
+      "type": "object"
+    },
+    "FindingOccurrenceAddedPayload": {
+      "properties": {
+        "finding_id": {
+          "description": "finding that received an occurrence",
+          "format": "uuid",
+          "title": "Finding Id",
+          "type": "string"
+        },
+        "run_id": {
+          "description": "run the occurrence belongs to",
+          "format": "uuid",
+          "title": "Run Id",
+          "type": "string"
+        },
+        "occurrence_count": {
+          "description": "occurrences of the finding after this one",
+          "minimum": 1,
+          "title": "Occurrence Count",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "finding_id",
+        "run_id",
+        "occurrence_count"
+      ],
+      "title": "FindingOccurrenceAddedPayload",
+      "type": "object"
+    },
+    "FindingStatus": {
+      "enum": [
+        "new",
+        "triaged",
+        "in_fix",
+        "verifying",
+        "resolved",
+        "known_gap",
+        "dismissed"
+      ],
+      "title": "FindingStatus",
+      "type": "string"
+    },
+    "FindingUpdatedEvent": {
+      "properties": {
+        "run_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "run the event belongs to; null for feed-only events",
+          "title": "Run Id"
+        },
+        "seq": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "per-run sequence from 1; null for ephemeral events",
+          "title": "Seq"
+        },
+        "ts": {
+          "description": "event time reported by the producer",
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "type": {
+          "const": "finding.updated",
+          "title": "Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/FindingUpdatedPayload"
+        }
+      },
+      "required": [
+        "run_id",
+        "seq",
+        "ts",
+        "type",
+        "payload"
+      ],
+      "title": "FindingUpdatedEvent",
+      "type": "object"
+    },
+    "FindingUpdatedPayload": {
+      "properties": {
+        "finding_id": {
+          "description": "finding that changed",
+          "format": "uuid",
+          "title": "Finding Id",
+          "type": "string"
+        },
+        "changes": {
+          "additionalProperties": {
+            "$ref": "#/$defs/FindingChange"
+          },
+          "description": "changed fields by field name",
+          "title": "Changes",
+          "type": "object"
+        }
+      },
+      "required": [
+        "finding_id",
+        "changes"
+      ],
+      "title": "FindingUpdatedPayload",
+      "type": "object"
+    },
+    "HelloLayaEvent": {
+      "properties": {
+        "run_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "run the event belongs to; null for feed-only events",
+          "title": "Run Id"
+        },
+        "seq": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "per-run sequence from 1; null for ephemeral events",
+          "title": "Seq"
+        },
+        "ts": {
+          "description": "event time reported by the producer",
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "type": {
+          "const": "hello.laya",
+          "title": "Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/HelloLayaPayload"
+        }
+      },
+      "required": [
+        "run_id",
+        "seq",
+        "ts",
+        "type",
+        "payload"
+      ],
+      "title": "HelloLayaEvent",
+      "type": "object"
+    },
+    "HelloLayaPayload": {
+      "properties": {
+        "ok": {
+          "description": "whether the Laya smoke call succeeded",
+          "title": "Ok",
+          "type": "boolean"
+        },
+        "latency_ms": {
+          "description": "round trip of the call in milliseconds",
+          "title": "Latency Ms",
+          "type": "integer"
+        },
+        "status_code": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "HTTP status returned by Laya",
+          "title": "Status Code"
+        },
+        "error": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "failure description when ok is false",
+          "title": "Error"
+        }
+      },
+      "required": [
+        "ok",
+        "latency_ms",
+        "status_code",
+        "error"
+      ],
+      "title": "HelloLayaPayload",
+      "type": "object"
+    },
+    "HelloTickEvent": {
+      "properties": {
+        "run_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "run the event belongs to; null for feed-only events",
+          "title": "Run Id"
+        },
+        "seq": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "per-run sequence from 1; null for ephemeral events",
+          "title": "Seq"
+        },
+        "ts": {
+          "description": "event time reported by the producer",
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "type": {
+          "const": "hello.tick",
+          "title": "Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/HelloTickPayload"
+        }
+      },
+      "required": [
+        "run_id",
+        "seq",
+        "ts",
+        "type",
+        "payload"
+      ],
+      "title": "HelloTickEvent",
+      "type": "object"
+    },
+    "HelloTickPayload": {
+      "properties": {
+        "n": {
+          "description": "tick number from 1",
+          "title": "N",
+          "type": "integer"
+        },
+        "total": {
+          "description": "ticks in this hello run",
+          "title": "Total",
+          "type": "integer"
+        },
+        "message": {
+          "description": "text of the tick",
+          "title": "Message",
+          "type": "string"
+        }
+      },
+      "required": [
+        "n",
+        "total",
+        "message"
+      ],
+      "title": "HelloTickPayload",
+      "type": "object"
+    },
+    "InvariantPack": {
+      "enum": [
+        "generic",
+        "llm_app",
+        "target"
+      ],
+      "title": "InvariantPack",
+      "type": "string"
+    },
+    "InvariantResultEvent": {
+      "properties": {
+        "run_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "run the event belongs to; null for feed-only events",
+          "title": "Run Id"
+        },
+        "seq": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "per-run sequence from 1; null for ephemeral events",
+          "title": "Seq"
+        },
+        "ts": {
+          "description": "event time reported by the producer",
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "type": {
+          "const": "invariant.result",
+          "title": "Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/InvariantResultPayload"
+        }
+      },
+      "required": [
+        "run_id",
+        "seq",
+        "ts",
+        "type",
+        "payload"
+      ],
+      "title": "InvariantResultEvent",
+      "type": "object"
+    },
+    "InvariantResultPayload": {
+      "properties": {
+        "invariant_id": {
+          "description": "invariant the result belongs to",
+          "title": "Invariant Id",
+          "type": "string"
+        },
+        "pack": {
+          "$ref": "#/$defs/InvariantPack",
+          "description": "pack of the invariant"
+        },
+        "run_scenario_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "run scenario checked; null for run-level",
+          "title": "Run Scenario Id"
+        },
+        "attempt": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "attempt number from 0; null for run-level results",
+          "title": "Attempt"
+        },
+        "status": {
+          "$ref": "#/$defs/VerdictStatus",
+          "description": "outcome of the invariant"
+        },
+        "tier": {
+          "$ref": "#/$defs/VerdictTier",
+          "description": "tier that decided the outcome"
+        },
+        "message": {
+          "description": "short redacted explanation",
+          "title": "Message",
+          "type": "string"
+        },
+        "skip_reason": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SkipReason"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "set exactly when status is skipped"
+        }
+      },
+      "required": [
+        "invariant_id",
+        "pack",
+        "run_scenario_id",
+        "attempt",
+        "status",
+        "tier",
+        "message",
+        "skip_reason"
+      ],
+      "title": "InvariantResultPayload",
+      "type": "object"
+    },
+    "JsonValue": {},
+    "MutationOutcome": {
+      "enum": [
+        "killed",
+        "survived",
+        "errored",
+        "skipped"
+      ],
+      "title": "MutationOutcome",
+      "type": "string"
+    },
+    "MutationOutcomeEvent": {
+      "properties": {
+        "run_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "run the event belongs to; null for feed-only events",
+          "title": "Run Id"
+        },
+        "seq": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "per-run sequence from 1; null for ephemeral events",
+          "title": "Seq"
+        },
+        "ts": {
+          "description": "event time reported by the producer",
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "type": {
+          "const": "mutation.outcome",
+          "title": "Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/MutationOutcomePayload"
+        }
+      },
+      "required": [
+        "run_id",
+        "seq",
+        "ts",
+        "type",
+        "payload"
+      ],
+      "title": "MutationOutcomeEvent",
+      "type": "object"
+    },
+    "MutationOutcomePayload": {
+      "properties": {
+        "mutation_run_id": {
+          "description": "mutation run the outcome belongs to",
+          "format": "uuid",
+          "title": "Mutation Run Id",
+          "type": "string"
+        },
+        "invariant_id": {
+          "description": "expected catcher the outcome is about",
+          "title": "Invariant Id",
+          "type": "string"
+        },
+        "outcome": {
+          "$ref": "#/$defs/MutationOutcome",
+          "description": "killed, survived, errored or skipped"
+        },
+        "caught_by": {
+          "description": "scenario ids that failed against the mutant and not against the baseline",
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": "Caught By",
+          "type": "array"
+        }
+      },
+      "required": [
+        "mutation_run_id",
+        "invariant_id",
+        "outcome",
+        "caught_by"
+      ],
+      "title": "MutationOutcomePayload",
+      "type": "object"
+    },
+    "NotificationCreatedEvent": {
+      "properties": {
+        "run_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "run the event belongs to; null for feed-only events",
+          "title": "Run Id"
+        },
+        "seq": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "per-run sequence from 1; null for ephemeral events",
+          "title": "Seq"
+        },
+        "ts": {
+          "description": "event time reported by the producer",
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "type": {
+          "const": "notification.created",
+          "title": "Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/NotificationCreatedPayload"
+        }
+      },
+      "required": [
+        "run_id",
+        "seq",
+        "ts",
+        "type",
+        "payload"
+      ],
+      "title": "NotificationCreatedEvent",
+      "type": "object"
+    },
+    "NotificationCreatedPayload": {
+      "properties": {
+        "notification_id": {
+          "description": "notification that was created",
+          "format": "uuid",
+          "title": "Notification Id",
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/NotificationKind",
+          "description": "kind of the notification"
+        },
+        "severity": {
+          "$ref": "#/$defs/Severity",
+          "description": "severity of the notification"
+        },
+        "title": {
+          "description": "title shown in the bell",
+          "title": "Title",
+          "type": "string"
+        },
+        "link": {
+          "description": "relative app path with a single leading slash, never an absolute URL",
+          "maxLength": 500,
+          "minLength": 1,
+          "title": "Link",
+          "type": "string"
+        }
+      },
+      "required": [
+        "notification_id",
+        "kind",
+        "severity",
+        "title",
+        "link"
+      ],
+      "title": "NotificationCreatedPayload",
+      "type": "object"
+    },
+    "NotificationKind": {
+      "enum": [
+        "run_finished",
+        "nightly_summary",
+        "finding_regression",
+        "budget_exceeded",
+        "mutant_survived",
+        "schedule_failed"
+      ],
+      "title": "NotificationKind",
+      "type": "string"
+    },
+    "ProposalItemStatus": {
+      "enum": [
+        "proposed",
+        "selected",
+        "declined",
+        "authored",
+        "covered"
+      ],
+      "title": "ProposalItemStatus",
+      "type": "string"
+    },
+    "ProposalUpdatedEvent": {
+      "properties": {
+        "run_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "run the event belongs to; null for feed-only events",
+          "title": "Run Id"
+        },
+        "seq": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "per-run sequence from 1; null for ephemeral events",
+          "title": "Seq"
+        },
+        "ts": {
+          "description": "event time reported by the producer",
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "type": {
+          "const": "proposal.updated",
+          "title": "Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/ProposalUpdatedPayload"
+        }
+      },
+      "required": [
+        "run_id",
+        "seq",
+        "ts",
+        "type",
+        "payload"
+      ],
+      "title": "ProposalUpdatedEvent",
+      "type": "object"
+    },
+    "ProposalUpdatedPayload": {
+      "properties": {
+        "target_id": {
+          "description": "target whose test proposal changed",
+          "format": "uuid",
+          "title": "Target Id",
+          "type": "string"
+        },
+        "proposal_id": {
+          "description": "proposal that changed",
+          "format": "uuid",
+          "title": "Proposal Id",
+          "type": "string"
+        },
+        "item_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "item that changed; null when the whole proposal was replaced",
+          "title": "Item Id"
+        },
+        "status": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ProposalItemStatus"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "new status of that item; null with it"
+        }
+      },
+      "required": [
+        "target_id",
+        "proposal_id",
+        "item_id",
+        "status"
+      ],
+      "title": "ProposalUpdatedPayload",
+      "type": "object"
+    },
+    "RunCounters": {
+      "properties": {
+        "scenarios_total": {
+          "minimum": 0,
+          "title": "Scenarios Total",
+          "type": "integer"
+        },
+        "scenarios_done": {
+          "minimum": 0,
+          "title": "Scenarios Done",
+          "type": "integer"
+        },
+        "pass": {
+          "minimum": 0,
+          "title": "Pass",
+          "type": "integer"
+        },
+        "fail": {
+          "minimum": 0,
+          "title": "Fail",
+          "type": "integer"
+        },
+        "flaky": {
+          "minimum": 0,
+          "title": "Flaky",
+          "type": "integer"
+        },
+        "uncertain": {
+          "minimum": 0,
+          "title": "Uncertain",
+          "type": "integer"
+        },
+        "skipped": {
+          "minimum": 0,
+          "title": "Skipped",
+          "type": "integer"
+        },
+        "steps_recorded": {
+          "minimum": 0,
+          "title": "Steps Recorded",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "scenarios_total",
+        "scenarios_done",
+        "pass",
+        "fail",
+        "flaky",
+        "uncertain",
+        "skipped",
+        "steps_recorded"
+      ],
+      "title": "RunCounters",
+      "type": "object"
+    },
+    "RunCreatedEvent": {
+      "properties": {
+        "run_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "run the event belongs to; null for feed-only events",
+          "title": "Run Id"
+        },
+        "seq": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "per-run sequence from 1; null for ephemeral events",
+          "title": "Seq"
+        },
+        "ts": {
+          "description": "event time reported by the producer",
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "type": {
+          "const": "run.created",
+          "title": "Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/RunCreatedPayload"
+        }
+      },
+      "required": [
+        "run_id",
+        "seq",
+        "ts",
+        "type",
+        "payload"
+      ],
+      "title": "RunCreatedEvent",
+      "type": "object"
+    },
+    "RunCreatedPayload": {
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/RunKind",
+          "description": "kind of run"
+        },
+        "target_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "target the run belongs to",
+          "title": "Target Id"
+        },
+        "plan_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "plan the run executes",
+          "title": "Plan Id"
+        },
+        "trigger": {
+          "$ref": "#/$defs/RunTrigger",
+          "description": "what started the run"
+        },
+        "created_by": {
+          "description": "user who started the run",
+          "format": "uuid",
+          "title": "Created By",
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/RunStatus",
+          "description": "status at creation"
+        }
+      },
+      "required": [
+        "kind",
+        "target_id",
+        "plan_id",
+        "trigger",
+        "created_by",
+        "status"
+      ],
+      "title": "RunCreatedPayload",
+      "type": "object"
+    },
+    "RunFinishedEvent": {
+      "properties": {
+        "run_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "run the event belongs to; null for feed-only events",
+          "title": "Run Id"
+        },
+        "seq": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "per-run sequence from 1; null for ephemeral events",
+          "title": "Seq"
+        },
+        "ts": {
+          "description": "event time reported by the producer",
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "type": {
+          "const": "run.finished",
+          "title": "Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/RunFinishedPayload"
+        }
+      },
+      "required": [
+        "run_id",
+        "seq",
+        "ts",
+        "type",
+        "payload"
+      ],
+      "title": "RunFinishedEvent",
+      "type": "object"
+    },
+    "RunFinishedPayload": {
+      "properties": {
+        "status": {
+          "$ref": "#/$defs/RunStatus",
+          "description": "terminal status"
+        },
+        "counters": {
+          "$ref": "#/$defs/RunCounters",
+          "description": "final counters"
+        },
+        "spent_usd": {
+          "description": "money spent by the run in USD",
+          "title": "Spent Usd",
+          "type": "number"
+        },
+        "duration_ms": {
+          "description": "run duration in milliseconds",
+          "title": "Duration Ms",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "status",
+        "counters",
+        "spent_usd",
+        "duration_ms"
+      ],
+      "title": "RunFinishedPayload",
+      "type": "object"
+    },
+    "RunKind": {
+      "enum": [
+        "suite",
+        "seed",
+        "generate",
+        "explore",
+        "simulate",
+        "redteam",
+        "mutation",
+        "hello"
+      ],
+      "title": "RunKind",
+      "type": "string"
+    },
+    "RunProgressEvent": {
+      "properties": {
+        "run_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "run the event belongs to; null for feed-only events",
+          "title": "Run Id"
+        },
+        "seq": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "per-run sequence from 1; null for ephemeral events",
+          "title": "Seq"
+        },
+        "ts": {
+          "description": "event time reported by the producer",
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "type": {
+          "const": "run.progress",
+          "title": "Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/RunCounters"
+        }
+      },
+      "required": [
+        "run_id",
+        "seq",
+        "ts",
+        "type",
+        "payload"
+      ],
+      "title": "RunProgressEvent",
+      "type": "object"
+    },
+    "RunScenarioStatus": {
+      "enum": [
+        "queued",
+        "running",
+        "finished",
+        "skipped",
+        "errored",
+        "canceled"
+      ],
+      "title": "RunScenarioStatus",
+      "type": "string"
+    },
+    "RunStatus": {
+      "enum": [
+        "queued",
+        "planning",
+        "seeding",
+        "running",
+        "canceling",
+        "completed",
+        "failed",
+        "canceled",
+        "budget_exceeded"
+      ],
+      "title": "RunStatus",
+      "type": "string"
+    },
+    "RunStatusChangedEvent": {
+      "properties": {
+        "run_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "run the event belongs to; null for feed-only events",
+          "title": "Run Id"
+        },
+        "seq": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "per-run sequence from 1; null for ephemeral events",
+          "title": "Seq"
+        },
+        "ts": {
+          "description": "event time reported by the producer",
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "type": {
+          "const": "run.status_changed",
+          "title": "Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/RunStatusChangedPayload"
+        }
+      },
+      "required": [
+        "run_id",
+        "seq",
+        "ts",
+        "type",
+        "payload"
+      ],
+      "title": "RunStatusChangedEvent",
+      "type": "object"
+    },
+    "RunStatusChangedPayload": {
+      "properties": {
+        "status": {
+          "$ref": "#/$defs/RunStatus",
+          "description": "new status"
+        },
+        "previous": {
+          "$ref": "#/$defs/RunStatus",
+          "description": "status before the change"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "why the status changed",
+          "title": "Reason"
+        }
+      },
+      "required": [
+        "status",
+        "previous",
+        "reason"
+      ],
+      "title": "RunStatusChangedPayload",
+      "type": "object"
+    },
+    "RunTrigger": {
+      "enum": [
+        "manual",
+        "schedule",
+        "api",
+        "agent"
+      ],
+      "title": "RunTrigger",
+      "type": "string"
+    },
+    "ScenarioChangedEvent": {
+      "properties": {
+        "run_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "run the event belongs to; null for feed-only events",
+          "title": "Run Id"
+        },
+        "seq": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "per-run sequence from 1; null for ephemeral events",
+          "title": "Seq"
+        },
+        "ts": {
+          "description": "event time reported by the producer",
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "type": {
+          "const": "scenario.changed",
+          "title": "Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/ScenarioChangedPayload"
+        }
+      },
+      "required": [
+        "run_id",
+        "seq",
+        "ts",
+        "type",
+        "payload"
+      ],
+      "title": "ScenarioChangedEvent",
+      "type": "object"
+    },
+    "ScenarioChangedPayload": {
+      "properties": {
+        "scenario_id": {
+          "description": "scenario that changed",
+          "format": "uuid",
+          "title": "Scenario Id",
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/ScenarioStatus",
+          "description": "scenario status after the change"
+        },
+        "cell_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "coverage cell of the scenario",
+          "title": "Cell Id"
+        }
+      },
+      "required": [
+        "scenario_id",
+        "status",
+        "cell_id"
+      ],
+      "title": "ScenarioChangedPayload",
+      "type": "object"
+    },
+    "ScenarioFinishedEvent": {
+      "properties": {
+        "run_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "run the event belongs to; null for feed-only events",
+          "title": "Run Id"
+        },
+        "seq": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "per-run sequence from 1; null for ephemeral events",
+          "title": "Seq"
+        },
+        "ts": {
+          "description": "event time reported by the producer",
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "type": {
+          "const": "scenario.finished",
+          "title": "Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/ScenarioFinishedPayload"
+        }
+      },
+      "required": [
+        "run_id",
+        "seq",
+        "ts",
+        "type",
+        "payload"
+      ],
+      "title": "ScenarioFinishedEvent",
+      "type": "object"
+    },
+    "ScenarioFinishedPayload": {
+      "properties": {
+        "run_scenario_id": {
+          "description": "run scenario that finished",
+          "format": "uuid",
+          "title": "Run Scenario Id",
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/RunScenarioStatus",
+          "description": "final status"
+        },
+        "verdict": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Verdict"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "aggregated verdict; null when there is none"
+        },
+        "attempts": {
+          "$ref": "#/$defs/AttemptTally",
+          "description": "attempt outcomes"
+        },
+        "duration_ms": {
+          "description": "time from first attempt start to last attempt end",
+          "title": "Duration Ms",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "run_scenario_id",
+        "status",
+        "verdict",
+        "attempts",
+        "duration_ms"
+      ],
+      "title": "ScenarioFinishedPayload",
+      "type": "object"
+    },
+    "ScenarioQueuedEvent": {
+      "properties": {
+        "run_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "run the event belongs to; null for feed-only events",
+          "title": "Run Id"
+        },
+        "seq": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "per-run sequence from 1; null for ephemeral events",
+          "title": "Seq"
+        },
+        "ts": {
+          "description": "event time reported by the producer",
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "type": {
+          "const": "scenario.queued",
+          "title": "Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/ScenarioQueuedPayload"
+        }
+      },
+      "required": [
+        "run_id",
+        "seq",
+        "ts",
+        "type",
+        "payload"
+      ],
+      "title": "ScenarioQueuedEvent",
+      "type": "object"
+    },
+    "ScenarioQueuedPayload": {
+      "properties": {
+        "run_scenario_id": {
+          "description": "run scenario that was queued",
+          "format": "uuid",
+          "title": "Run Scenario Id",
+          "type": "string"
+        },
+        "scenario_id": {
+          "description": "scenario the run scenario executes",
+          "format": "uuid",
+          "title": "Scenario Id",
+          "type": "string"
+        },
+        "title": {
+          "description": "scenario title",
+          "title": "Title",
+          "type": "string"
+        },
+        "role": {
+          "description": "role the scenario runs as",
+          "title": "Role",
+          "type": "string"
+        },
+        "interface_id": {
+          "description": "interface the scenario runs against",
+          "title": "Interface Id",
+          "type": "string"
+        },
+        "attempts_total": {
+          "description": "attempts planned",
+          "title": "Attempts Total",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "run_scenario_id",
+        "scenario_id",
+        "title",
+        "role",
+        "interface_id",
+        "attempts_total"
+      ],
+      "title": "ScenarioQueuedPayload",
+      "type": "object"
+    },
+    "ScenarioStartedEvent": {
+      "properties": {
+        "run_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "run the event belongs to; null for feed-only events",
+          "title": "Run Id"
+        },
+        "seq": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "per-run sequence from 1; null for ephemeral events",
+          "title": "Seq"
+        },
+        "ts": {
+          "description": "event time reported by the producer",
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "type": {
+          "const": "scenario.started",
+          "title": "Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/ScenarioStartedPayload"
+        }
+      },
+      "required": [
+        "run_id",
+        "seq",
+        "ts",
+        "type",
+        "payload"
+      ],
+      "title": "ScenarioStartedEvent",
+      "type": "object"
+    },
+    "ScenarioStartedPayload": {
+      "properties": {
+        "run_scenario_id": {
+          "description": "run scenario that started",
+          "format": "uuid",
+          "title": "Run Scenario Id",
+          "type": "string"
+        },
+        "attempt": {
+          "description": "attempt number from 0",
+          "title": "Attempt",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "run_scenario_id",
+        "attempt"
+      ],
+      "title": "ScenarioStartedPayload",
+      "type": "object"
+    },
+    "ScenarioStatus": {
+      "enum": [
+        "draft",
+        "validating",
+        "invalid",
+        "in_review",
+        "accepted",
+        "rejected",
+        "quarantined",
+        "retired"
+      ],
+      "title": "ScenarioStatus",
+      "type": "string"
+    },
+    "ScenarioVerdictEvent": {
+      "properties": {
+        "run_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "run the event belongs to; null for feed-only events",
+          "title": "Run Id"
+        },
+        "seq": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "per-run sequence from 1; null for ephemeral events",
+          "title": "Seq"
+        },
+        "ts": {
+          "description": "event time reported by the producer",
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "type": {
+          "const": "scenario.verdict",
+          "title": "Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/ScenarioVerdictPayload"
+        }
+      },
+      "required": [
+        "run_id",
+        "seq",
+        "ts",
+        "type",
+        "payload"
+      ],
+      "title": "ScenarioVerdictEvent",
+      "type": "object"
+    },
+    "ScenarioVerdictPayload": {
+      "properties": {
+        "run_scenario_id": {
+          "description": "run scenario the verdict belongs to",
+          "format": "uuid",
+          "title": "Run Scenario Id",
+          "type": "string"
+        },
+        "attempt": {
+          "description": "attempt number from 0",
+          "title": "Attempt",
+          "type": "integer"
+        },
+        "verdict": {
+          "$ref": "#/$defs/Verdict",
+          "description": "verdict of the attempt"
+        }
+      },
+      "required": [
+        "run_scenario_id",
+        "attempt",
+        "verdict"
+      ],
+      "title": "ScenarioVerdictPayload",
+      "type": "object"
+    },
+    "SeedPhase": {
+      "enum": [
+        "reset",
+        "hash",
+        "assert"
+      ],
+      "title": "SeedPhase",
+      "type": "string"
+    },
+    "SeedPhaseStatus": {
+      "enum": [
+        "started",
+        "ok",
+        "failed"
+      ],
+      "title": "SeedPhaseStatus",
+      "type": "string"
+    },
+    "SeedProgressEvent": {
+      "properties": {
+        "run_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "run the event belongs to; null for feed-only events",
+          "title": "Run Id"
+        },
+        "seq": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "per-run sequence from 1; null for ephemeral events",
+          "title": "Seq"
+        },
+        "ts": {
+          "description": "event time reported by the producer",
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "type": {
+          "const": "seed.progress",
+          "title": "Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/SeedProgressPayload"
+        }
+      },
+      "required": [
+        "run_id",
+        "seq",
+        "ts",
+        "type",
+        "payload"
+      ],
+      "title": "SeedProgressEvent",
+      "type": "object"
+    },
+    "SeedProgressPayload": {
+      "properties": {
+        "phase": {
+          "$ref": "#/$defs/SeedPhase",
+          "description": "seed phase the event reports"
+        },
+        "status": {
+          "$ref": "#/$defs/SeedPhaseStatus",
+          "description": "progress of the phase"
+        },
+        "observed_hash": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "hash the hash command observed, once known",
+          "title": "Observed Hash"
+        },
+        "expected_hash": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "hash the seed is expected to have, once known",
+          "title": "Expected Hash"
+        }
+      },
+      "required": [
+        "phase",
+        "status",
+        "observed_hash",
+        "expected_hash"
+      ],
+      "title": "SeedProgressPayload",
+      "type": "object"
+    },
+    "Severity": {
+      "enum": [
+        "critical",
+        "high",
+        "medium",
+        "low",
+        "info"
+      ],
+      "title": "Severity",
+      "type": "string"
+    },
+    "SimCheckedEvent": {
+      "properties": {
+        "run_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "run the event belongs to; null for feed-only events",
+          "title": "Run Id"
+        },
+        "seq": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "per-run sequence from 1; null for ephemeral events",
+          "title": "Seq"
+        },
+        "ts": {
+          "description": "event time reported by the producer",
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "type": {
+          "const": "sim.checked",
+          "title": "Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/SimCheckedPayload"
+        }
+      },
+      "required": [
+        "run_id",
+        "seq",
+        "ts",
+        "type",
+        "payload"
+      ],
+      "title": "SimCheckedEvent",
+      "type": "object"
+    },
+    "SimCheckedPayload": {
+      "properties": {
+        "sim_session_id": {
+          "description": "simulated session that was checked",
+          "format": "uuid",
+          "title": "Sim Session Id",
+          "type": "string"
+        },
+        "checks": {
+          "$ref": "#/$defs/SimChecks",
+          "description": "outcome of each of the five checks"
+        },
+        "verdict": {
+          "$ref": "#/$defs/Verdict",
+          "description": "verdict of the session"
+        }
+      },
+      "required": [
+        "sim_session_id",
+        "checks",
+        "verdict"
+      ],
+      "title": "SimCheckedPayload",
+      "type": "object"
+    },
+    "SimChecks": {
+      "properties": {
+        "end_state": {
+          "$ref": "#/$defs/VerdictStatus",
+          "description": "end state of the target, checked by code"
+        },
+        "calls": {
+          "$ref": "#/$defs/VerdictStatus",
+          "description": "tool and API calls the session made, by code"
+        },
+        "invariants": {
+          "$ref": "#/$defs/VerdictStatus",
+          "description": "invariants evaluated on the session steps"
+        },
+        "goal": {
+          "$ref": "#/$defs/VerdictStatus",
+          "description": "success criteria of the goal: typed criteria by code, judge: by the judge"
+        },
+        "dialogue": {
+          "$ref": "#/$defs/VerdictStatus",
+          "description": "quality of the dialogue by the judge; can lower a pass to uncertain, never to fail alone"
+        }
+      },
+      "required": [
+        "end_state",
+        "calls",
+        "invariants",
+        "goal",
+        "dialogue"
+      ],
+      "title": "SimChecks",
+      "type": "object"
+    },
+    "SimSpeaker": {
+      "enum": [
+        "persona",
+        "target"
+      ],
+      "title": "SimSpeaker",
+      "type": "string"
+    },
+    "SimTurnEvent": {
+      "properties": {
+        "run_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "run the event belongs to; null for feed-only events",
+          "title": "Run Id"
+        },
+        "seq": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "per-run sequence from 1; null for ephemeral events",
+          "title": "Seq"
+        },
+        "ts": {
+          "description": "event time reported by the producer",
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "type": {
+          "const": "sim.turn",
+          "title": "Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/SimTurnPayload"
+        }
+      },
+      "required": [
+        "run_id",
+        "seq",
+        "ts",
+        "type",
+        "payload"
+      ],
+      "title": "SimTurnEvent",
+      "type": "object"
+    },
+    "SimTurnPayload": {
+      "properties": {
+        "sim_session_id": {
+          "description": "simulated session the turn belongs to",
+          "format": "uuid",
+          "title": "Sim Session Id",
+          "type": "string"
+        },
+        "turn": {
+          "description": "turn number from 1",
+          "minimum": 1,
+          "title": "Turn",
+          "type": "integer"
+        },
+        "speaker": {
+          "$ref": "#/$defs/SimSpeaker",
+          "description": "who spoke"
+        },
+        "text_preview": {
+          "description": "start of the turn text, redacted",
+          "maxLength": 200,
+          "title": "Text Preview",
+          "type": "string"
+        }
+      },
+      "required": [
+        "sim_session_id",
+        "turn",
+        "speaker",
+        "text_preview"
+      ],
+      "title": "SimTurnPayload",
+      "type": "object"
+    },
+    "SkipReason": {
+      "enum": [
+        "service_down",
+        "hook_missing",
+        "precondition_failed",
+        "env_missing",
+        "role_unavailable",
+        "budget_exceeded",
+        "canceled",
+        "production_blocked",
+        "flag_disabled",
+        "quarantined",
+        "seed_mismatch",
+        "adapter_unsupported"
+      ],
+      "title": "SkipReason",
+      "type": "string"
+    },
+    "StepGradedEvent": {
+      "properties": {
+        "run_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "run the event belongs to; null for feed-only events",
+          "title": "Run Id"
+        },
+        "seq": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "per-run sequence from 1; null for ephemeral events",
+          "title": "Seq"
+        },
+        "ts": {
+          "description": "event time reported by the producer",
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "type": {
+          "const": "step.graded",
+          "title": "Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/StepGradedPayload"
+        }
+      },
+      "required": [
+        "run_id",
+        "seq",
+        "ts",
+        "type",
+        "payload"
+      ],
+      "title": "StepGradedEvent",
+      "type": "object"
+    },
+    "StepGradedPayload": {
+      "properties": {
+        "step_id": {
+          "description": "step that was graded",
+          "format": "uuid",
+          "title": "Step Id",
+          "type": "string"
+        },
+        "run_scenario_id": {
+          "description": "run scenario the step belongs to",
+          "format": "uuid",
+          "title": "Run Scenario Id",
+          "type": "string"
+        },
+        "verdict": {
+          "$ref": "#/$defs/Verdict",
+          "description": "verdict with the tier and confidence that decided it"
+        },
+        "escalated_to": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/VerdictTier"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "highest tier the step was escalated to; null when code decided alone"
+        }
+      },
+      "required": [
+        "step_id",
+        "run_scenario_id",
+        "verdict",
+        "escalated_to"
+      ],
+      "title": "StepGradedPayload",
+      "type": "object"
+    },
+    "StepRecordedEvent": {
+      "properties": {
+        "run_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "run the event belongs to; null for feed-only events",
+          "title": "Run Id"
+        },
+        "seq": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "per-run sequence from 1; null for ephemeral events",
+          "title": "Seq"
+        },
+        "ts": {
+          "description": "event time reported by the producer",
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "type": {
+          "const": "step.recorded",
+          "title": "Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/StepRecordedPayload"
+        }
+      },
+      "required": [
+        "run_id",
+        "seq",
+        "ts",
+        "type",
+        "payload"
+      ],
+      "title": "StepRecordedEvent",
+      "type": "object"
+    },
+    "StepRecordedPayload": {
+      "properties": {
+        "step_id": {
+          "description": "step that was recorded",
+          "format": "uuid",
+          "title": "Step Id",
+          "type": "string"
+        },
+        "run_scenario_id": {
+          "description": "run scenario the step belongs to",
+          "format": "uuid",
+          "title": "Run Scenario Id",
+          "type": "string"
+        },
+        "attempt": {
+          "description": "attempt number from 0",
+          "title": "Attempt",
+          "type": "integer"
+        },
+        "index": {
+          "description": "position of the step in the attempt from 0",
+          "title": "Index",
+          "type": "integer"
+        },
+        "adapter": {
+          "$ref": "#/$defs/AdapterKind",
+          "description": "adapter that drove the step"
+        },
+        "label": {
+          "description": "short description of the step",
+          "title": "Label",
+          "type": "string"
+        },
+        "ok": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "true when the adapter completed the step",
+          "title": "Ok"
+        },
+        "latency_ms": {
+          "description": "step latency in milliseconds",
+          "title": "Latency Ms",
+          "type": "integer"
+        },
+        "cost_usd": {
+          "description": "cost the step reported in USD",
+          "title": "Cost Usd",
+          "type": "number"
+        },
+        "tier0_failure_count": {
+          "description": "Tier 0 checks that failed",
+          "title": "Tier0 Failure Count",
+          "type": "integer"
+        },
+        "screenshot_count": {
+          "description": "screenshots filed for the step",
+          "title": "Screenshot Count",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "step_id",
+        "run_scenario_id",
+        "attempt",
+        "index",
+        "adapter",
+        "label",
+        "ok",
+        "latency_ms",
+        "cost_usd",
+        "tier0_failure_count",
+        "screenshot_count"
+      ],
+      "title": "StepRecordedPayload",
+      "type": "object"
+    },
+    "StreamClosingEvent": {
+      "properties": {
+        "run_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "run the event belongs to; null for feed-only events",
+          "title": "Run Id"
+        },
+        "seq": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "per-run sequence from 1; null for ephemeral events",
+          "title": "Seq"
+        },
+        "ts": {
+          "description": "event time reported by the producer",
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "type": {
+          "const": "stream.closing",
+          "title": "Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/StreamClosingPayload"
+        }
+      },
+      "required": [
+        "run_id",
+        "seq",
+        "ts",
+        "type",
+        "payload"
+      ],
+      "title": "StreamClosingEvent",
+      "type": "object"
+    },
+    "StreamClosingPayload": {
+      "properties": {
+        "reason": {
+          "description": "why the server ends the stream; unauthorized means the personal token of the subscriber was revoked or expired, or its user was deactivated",
+          "enum": [
+            "max_age",
+            "shutdown",
+            "slow_consumer",
+            "unauthorized"
+          ],
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "reason"
+      ],
+      "title": "StreamClosingPayload",
+      "type": "object"
+    },
+    "StreamErrorEvent": {
+      "properties": {
+        "run_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "run the event belongs to; null for feed-only events",
+          "title": "Run Id"
+        },
+        "seq": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "per-run sequence from 1; null for ephemeral events",
+          "title": "Seq"
+        },
+        "ts": {
+          "description": "event time reported by the producer",
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "type": {
+          "const": "stream.error",
+          "title": "Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/StreamErrorPayload"
+        }
+      },
+      "required": [
+        "run_id",
+        "seq",
+        "ts",
+        "type",
+        "payload"
+      ],
+      "title": "StreamErrorEvent",
+      "type": "object"
+    },
+    "StreamErrorPayload": {
+      "properties": {
+        "code": {
+          "description": "error code from the API error table",
+          "title": "Code",
+          "type": "string"
+        },
+        "message": {
+          "description": "human readable message",
+          "title": "Message",
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "title": "StreamErrorPayload",
+      "type": "object"
+    },
+    "StreamHeartbeatEvent": {
+      "properties": {
+        "run_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "run the event belongs to; null for feed-only events",
+          "title": "Run Id"
+        },
+        "seq": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "per-run sequence from 1; null for ephemeral events",
+          "title": "Seq"
+        },
+        "ts": {
+          "description": "event time reported by the producer",
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "type": {
+          "const": "stream.heartbeat",
+          "title": "Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/StreamHeartbeatPayload"
+        }
+      },
+      "required": [
+        "run_id",
+        "seq",
+        "ts",
+        "type",
+        "payload"
+      ],
+      "title": "StreamHeartbeatEvent",
+      "type": "object"
+    },
+    "StreamHeartbeatPayload": {
+      "properties": {},
+      "title": "StreamHeartbeatPayload",
+      "type": "object"
+    },
+    "StreamHelloEvent": {
+      "properties": {
+        "run_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "run the event belongs to; null for feed-only events",
+          "title": "Run Id"
+        },
+        "seq": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "per-run sequence from 1; null for ephemeral events",
+          "title": "Seq"
+        },
+        "ts": {
+          "description": "event time reported by the producer",
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "type": {
+          "const": "stream.hello",
+          "title": "Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/StreamHelloPayload"
+        }
+      },
+      "required": [
+        "run_id",
+        "seq",
+        "ts",
+        "type",
+        "payload"
+      ],
+      "title": "StreamHelloEvent",
+      "type": "object"
+    },
+    "StreamHelloPayload": {
+      "properties": {
+        "run_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "run of the stream; null on a feed",
+          "title": "Run Id"
+        },
+        "head_seq": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "highest persisted seq of the run; null on a feed",
+          "title": "Head Seq"
+        },
+        "resumed_from": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "last_seq the client resumed from, if any",
+          "title": "Resumed From"
+        },
+        "heartbeat_seconds": {
+          "description": "seconds between stream.heartbeat events",
+          "title": "Heartbeat Seconds",
+          "type": "integer"
+        },
+        "limits": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/StreamLimits"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "tile limits; null on a feed"
+        },
+        "feed": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FeedName"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "feed name; null on a run stream"
+        }
+      },
+      "required": [
+        "run_id",
+        "head_seq",
+        "resumed_from",
+        "heartbeat_seconds",
+        "limits",
+        "feed"
+      ],
+      "title": "StreamHelloPayload",
+      "type": "object"
+    },
+    "StreamLimits": {
+      "properties": {
+        "max_tiles": {
+          "description": "tiles one connection may subscribe to",
+          "title": "Max Tiles",
+          "type": "integer"
+        },
+        "grid": {
+          "$ref": "#/$defs/TileQuality",
+          "description": "quality of a tile shown in the grid"
+        },
+        "focus": {
+          "$ref": "#/$defs/TileQuality",
+          "description": "quality of the focused tile"
+        }
+      },
+      "required": [
+        "max_tiles",
+        "grid",
+        "focus"
+      ],
+      "title": "StreamLimits",
+      "type": "object"
+    },
+    "StreamReplayEndEvent": {
+      "properties": {
+        "run_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "run the event belongs to; null for feed-only events",
+          "title": "Run Id"
+        },
+        "seq": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "per-run sequence from 1; null for ephemeral events",
+          "title": "Seq"
+        },
+        "ts": {
+          "description": "event time reported by the producer",
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "type": {
+          "const": "stream.replay_end",
+          "title": "Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/StreamReplayEndPayload"
+        }
+      },
+      "required": [
+        "run_id",
+        "seq",
+        "ts",
+        "type",
+        "payload"
+      ],
+      "title": "StreamReplayEndEvent",
+      "type": "object"
+    },
+    "StreamReplayEndPayload": {
+      "properties": {
+        "through_seq": {
+          "description": "highest seq replayed before live events begin",
+          "title": "Through Seq",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "through_seq"
+      ],
+      "title": "StreamReplayEndPayload",
+      "type": "object"
+    },
+    "StreamResyncRequiredEvent": {
+      "properties": {
+        "run_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "run the event belongs to; null for feed-only events",
+          "title": "Run Id"
+        },
+        "seq": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "per-run sequence from 1; null for ephemeral events",
+          "title": "Seq"
+        },
+        "ts": {
+          "description": "event time reported by the producer",
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "type": {
+          "const": "stream.resync_required",
+          "title": "Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/StreamResyncRequiredPayload"
+        }
+      },
+      "required": [
+        "run_id",
+        "seq",
+        "ts",
+        "type",
+        "payload"
+      ],
+      "title": "StreamResyncRequiredEvent",
+      "type": "object"
+    },
+    "StreamResyncRequiredPayload": {
+      "properties": {
+        "reason": {
+          "description": "why replay is impossible",
+          "enum": [
+            "gap_too_large",
+            "retention"
+          ],
+          "title": "Reason",
+          "type": "string"
+        },
+        "min_seq": {
+          "description": "lowest seq the log can still replay",
+          "title": "Min Seq",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "reason",
+        "min_seq"
+      ],
+      "title": "StreamResyncRequiredPayload",
+      "type": "object"
+    },
+    "TileFrameEvent": {
+      "properties": {
+        "run_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "run the event belongs to; null for feed-only events",
+          "title": "Run Id"
+        },
+        "seq": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "per-run sequence from 1; null for ephemeral events",
+          "title": "Seq"
+        },
+        "ts": {
+          "description": "event time reported by the producer",
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "type": {
+          "const": "tile.frame",
+          "title": "Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/TileFramePayload"
+        }
+      },
+      "required": [
+        "run_id",
+        "seq",
+        "ts",
+        "type",
+        "payload"
+      ],
+      "title": "TileFrameEvent",
+      "type": "object"
+    },
+    "TileFramePayload": {
+      "properties": {
+        "browser_session_id": {
+          "description": "browser session the frame belongs to",
+          "format": "uuid",
+          "title": "Browser Session Id",
+          "type": "string"
+        },
+        "frame_seq": {
+          "description": "per-session frame counter used by tile.ack",
+          "minimum": 0,
+          "title": "Frame Seq",
+          "type": "integer"
+        },
+        "mime": {
+          "const": "image/jpeg",
+          "description": "media type of the encoded frame",
+          "title": "Mime",
+          "type": "string"
+        },
+        "width": {
+          "description": "frame width in pixels",
+          "exclusiveMinimum": 0,
+          "title": "Width",
+          "type": "integer"
+        },
+        "height": {
+          "description": "frame height in pixels",
+          "exclusiveMinimum": 0,
+          "title": "Height",
+          "type": "integer"
+        },
+        "data_b64": {
+          "description": "base64 encoded JPEG bytes",
+          "minLength": 1,
+          "title": "Data B64",
+          "type": "string"
+        },
+        "page_url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "URL of the page shown in the frame",
+          "title": "Page Url"
+        },
+        "captured_at": {
+          "description": "capture time reported by the worker",
+          "format": "date-time",
+          "title": "Captured At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "browser_session_id",
+        "frame_seq",
+        "mime",
+        "width",
+        "height",
+        "data_b64",
+        "captured_at"
+      ],
+      "title": "TileFramePayload",
+      "type": "object"
+    },
+    "TileQuality": {
+      "properties": {
+        "max_fps": {
+          "description": "frames per second ceiling for a tile in this mode",
+          "title": "Max Fps",
+          "type": "integer"
+        },
+        "quality": {
+          "description": "JPEG quality from 1 to 100",
+          "title": "Quality",
+          "type": "integer"
+        },
+        "max_width": {
+          "description": "frame width ceiling in pixels",
+          "title": "Max Width",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "max_fps",
+        "quality",
+        "max_width"
+      ],
+      "title": "TileQuality",
+      "type": "object"
+    },
+    "Verdict": {
+      "properties": {
+        "status": {
+          "$ref": "#/$defs/VerdictStatus"
+        },
+        "tier": {
+          "$ref": "#/$defs/VerdictTier"
+        },
+        "confidence": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "confidence from 0 to 1; null when the tier gives none",
+          "title": "Confidence"
+        },
+        "reason_code": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "stable machine readable reason",
+          "title": "Reason Code"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "short human readable reason",
+          "title": "Reason"
+        },
+        "skip_reason": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SkipReason"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "set exactly when status is skipped"
+        }
+      },
+      "required": [
+        "status",
+        "tier",
+        "confidence",
+        "reason_code",
+        "reason",
+        "skip_reason"
+      ],
+      "title": "Verdict",
+      "type": "object"
+    },
+    "VerdictStatus": {
+      "enum": [
+        "pass",
+        "fail",
+        "flaky",
+        "uncertain",
+        "skipped"
+      ],
+      "title": "VerdictStatus",
+      "type": "string"
+    },
+    "VerdictTier": {
+      "enum": [
+        "code",
+        "laya",
+        "judge",
+        "human"
+      ],
+      "title": "VerdictTier",
+      "type": "string"
+    },
+    "Viewport": {
+      "properties": {
+        "width": {
+          "description": "viewport width in pixels",
+          "exclusiveMinimum": 0,
+          "title": "Width",
+          "type": "integer"
+        },
+        "height": {
+          "description": "viewport height in pixels",
+          "exclusiveMinimum": 0,
+          "title": "Height",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "width",
+        "height"
+      ],
+      "title": "Viewport",
+      "type": "object"
+    }
+  },
+  "discriminator": {
+    "mapping": {
+      "agent_session.changed": "#/$defs/AgentSessionChangedEvent",
+      "browser_session.ended": "#/$defs/BrowserSessionEndedEvent",
+      "browser_session.started": "#/$defs/BrowserSessionStartedEvent",
+      "budget.exhausted": "#/$defs/BudgetExhaustedEvent",
+      "budget.updated": "#/$defs/BudgetUpdatedEvent",
+      "coverage.updated": "#/$defs/CoverageUpdatedEvent",
+      "dashboard.invalidate": "#/$defs/DashboardInvalidateEvent",
+      "explore.action": "#/$defs/ExploreActionEvent",
+      "explore.candidate": "#/$defs/ExploreCandidateEvent",
+      "explore.verified": "#/$defs/ExploreVerifiedEvent",
+      "finding.created": "#/$defs/FindingCreatedEvent",
+      "finding.occurrence_added": "#/$defs/FindingOccurrenceAddedEvent",
+      "finding.updated": "#/$defs/FindingUpdatedEvent",
+      "hello.laya": "#/$defs/HelloLayaEvent",
+      "hello.tick": "#/$defs/HelloTickEvent",
+      "invariant.result": "#/$defs/InvariantResultEvent",
+      "mutation.outcome": "#/$defs/MutationOutcomeEvent",
+      "notification.created": "#/$defs/NotificationCreatedEvent",
+      "proposal.updated": "#/$defs/ProposalUpdatedEvent",
+      "run.created": "#/$defs/RunCreatedEvent",
+      "run.finished": "#/$defs/RunFinishedEvent",
+      "run.progress": "#/$defs/RunProgressEvent",
+      "run.status_changed": "#/$defs/RunStatusChangedEvent",
+      "scenario.changed": "#/$defs/ScenarioChangedEvent",
+      "scenario.finished": "#/$defs/ScenarioFinishedEvent",
+      "scenario.queued": "#/$defs/ScenarioQueuedEvent",
+      "scenario.started": "#/$defs/ScenarioStartedEvent",
+      "scenario.verdict": "#/$defs/ScenarioVerdictEvent",
+      "seed.progress": "#/$defs/SeedProgressEvent",
+      "sim.checked": "#/$defs/SimCheckedEvent",
+      "sim.turn": "#/$defs/SimTurnEvent",
+      "step.graded": "#/$defs/StepGradedEvent",
+      "step.recorded": "#/$defs/StepRecordedEvent",
+      "stream.closing": "#/$defs/StreamClosingEvent",
+      "stream.error": "#/$defs/StreamErrorEvent",
+      "stream.heartbeat": "#/$defs/StreamHeartbeatEvent",
+      "stream.hello": "#/$defs/StreamHelloEvent",
+      "stream.replay_end": "#/$defs/StreamReplayEndEvent",
+      "stream.resync_required": "#/$defs/StreamResyncRequiredEvent",
+      "tile.frame": "#/$defs/TileFrameEvent"
+    },
+    "propertyName": "type"
+  },
+  "oneOf": [
+    {
+      "$ref": "#/$defs/StreamHelloEvent"
+    },
+    {
+      "$ref": "#/$defs/StreamReplayEndEvent"
+    },
+    {
+      "$ref": "#/$defs/StreamResyncRequiredEvent"
+    },
+    {
+      "$ref": "#/$defs/StreamHeartbeatEvent"
+    },
+    {
+      "$ref": "#/$defs/StreamClosingEvent"
+    },
+    {
+      "$ref": "#/$defs/StreamErrorEvent"
+    },
+    {
+      "$ref": "#/$defs/HelloTickEvent"
+    },
+    {
+      "$ref": "#/$defs/HelloLayaEvent"
+    },
+    {
+      "$ref": "#/$defs/RunCreatedEvent"
+    },
+    {
+      "$ref": "#/$defs/RunStatusChangedEvent"
+    },
+    {
+      "$ref": "#/$defs/RunFinishedEvent"
+    },
+    {
+      "$ref": "#/$defs/RunProgressEvent"
+    },
+    {
+      "$ref": "#/$defs/BudgetUpdatedEvent"
+    },
+    {
+      "$ref": "#/$defs/BudgetExhaustedEvent"
+    },
+    {
+      "$ref": "#/$defs/ScenarioQueuedEvent"
+    },
+    {
+      "$ref": "#/$defs/ScenarioStartedEvent"
+    },
+    {
+      "$ref": "#/$defs/ScenarioVerdictEvent"
+    },
+    {
+      "$ref": "#/$defs/ScenarioFinishedEvent"
+    },
+    {
+      "$ref": "#/$defs/StepRecordedEvent"
+    },
+    {
+      "$ref": "#/$defs/BrowserSessionStartedEvent"
+    },
+    {
+      "$ref": "#/$defs/BrowserSessionEndedEvent"
+    },
+    {
+      "$ref": "#/$defs/TileFrameEvent"
+    },
+    {
+      "$ref": "#/$defs/SeedProgressEvent"
+    },
+    {
+      "$ref": "#/$defs/StepGradedEvent"
+    },
+    {
+      "$ref": "#/$defs/InvariantResultEvent"
+    },
+    {
+      "$ref": "#/$defs/FindingCreatedEvent"
+    },
+    {
+      "$ref": "#/$defs/FindingUpdatedEvent"
+    },
+    {
+      "$ref": "#/$defs/FindingOccurrenceAddedEvent"
+    },
+    {
+      "$ref": "#/$defs/ScenarioChangedEvent"
+    },
+    {
+      "$ref": "#/$defs/CoverageUpdatedEvent"
+    },
+    {
+      "$ref": "#/$defs/ExploreActionEvent"
+    },
+    {
+      "$ref": "#/$defs/ExploreCandidateEvent"
+    },
+    {
+      "$ref": "#/$defs/ExploreVerifiedEvent"
+    },
+    {
+      "$ref": "#/$defs/SimTurnEvent"
+    },
+    {
+      "$ref": "#/$defs/SimCheckedEvent"
+    },
+    {
+      "$ref": "#/$defs/MutationOutcomeEvent"
+    },
+    {
+      "$ref": "#/$defs/NotificationCreatedEvent"
+    },
+    {
+      "$ref": "#/$defs/DashboardInvalidateEvent"
+    },
+    {
+      "$ref": "#/$defs/ProposalUpdatedEvent"
+    },
+    {
+      "$ref": "#/$defs/AgentSessionChangedEvent"
+    }
+  ]
+}

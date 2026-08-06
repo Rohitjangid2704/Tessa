@@ -1,0 +1,226 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "probe.v1.json",
+  "title": "Tessa probe bank",
+  "description": "Schema of a probes/*.yaml file: typed Laya questions about short texts.",
+  "$defs": {
+    "AdapterKind": {
+      "enum": [
+        "http",
+        "sse",
+        "websocket",
+        "graphql",
+        "browser"
+      ],
+      "title": "AdapterKind",
+      "type": "string"
+    },
+    "FeatureKind": {
+      "enum": [
+        "read",
+        "write",
+        "flow",
+        "auth",
+        "admin",
+        "stream",
+        "job"
+      ],
+      "title": "FeatureKind",
+      "type": "string"
+    },
+    "ProbeAnswerType": {
+      "enum": [
+        "yes_no",
+        "choice"
+      ],
+      "title": "ProbeAnswerType",
+      "type": "string"
+    },
+    "ProbeAppliesTo": {
+      "additionalProperties": false,
+      "properties": {
+        "feature_kinds": {
+          "description": "feature kinds the probe applies to; empty means all",
+          "items": {
+            "$ref": "#/$defs/FeatureKind"
+          },
+          "title": "Feature Kinds",
+          "type": "array"
+        },
+        "adapters": {
+          "description": "adapters the probe applies to; empty means all",
+          "items": {
+            "$ref": "#/$defs/AdapterKind"
+          },
+          "title": "Adapters",
+          "type": "array"
+        }
+      },
+      "title": "ProbeAppliesTo",
+      "type": "object"
+    },
+    "ProbeDefinition": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "description": "stable slug of the probe",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "pack": {
+          "description": "pack the probe belongs to; target probes come from bundles",
+          "enum": [
+            "generic",
+            "llm_app"
+          ],
+          "title": "Pack",
+          "type": "string"
+        },
+        "question": {
+          "description": "typed question about a short text, never about numbers, dates or long text",
+          "maxLength": 400,
+          "minLength": 1,
+          "title": "Question",
+          "type": "string"
+        },
+        "answer_type": {
+          "$ref": "#/$defs/ProbeAnswerType",
+          "description": "yes_no or choice, nothing else",
+          "title": "answer_type"
+        },
+        "choices": {
+          "description": "answers of a choice question; empty for yes_no",
+          "items": {
+            "maxLength": 60,
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Choices",
+          "type": "array"
+        },
+        "applies_to": {
+          "$ref": "#/$defs/ProbeAppliesTo",
+          "title": "applies_to"
+        },
+        "input": {
+          "$ref": "#/$defs/ProbeInput",
+          "title": "input"
+        },
+        "threshold": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "confidence needed to decide; the global threshold when absent",
+          "title": "Threshold"
+        },
+        "invariant_id": {
+          "description": "invariant whose violation the probe detects",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Invariant Id",
+          "type": "string"
+        },
+        "version": {
+          "description": "version label, bumped when the question changes",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$",
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "pack",
+        "question",
+        "answer_type",
+        "input",
+        "invariant_id",
+        "version"
+      ],
+      "title": "ProbeDefinition",
+      "type": "object"
+    },
+    "ProbeInput": {
+      "additionalProperties": false,
+      "properties": {
+        "fields": {
+          "description": "fields shown to Laya, from the allow-list",
+          "items": {
+            "$ref": "#/$defs/ProbeInputFieldSpec"
+          },
+          "minItems": 1,
+          "title": "Fields",
+          "type": "array"
+        }
+      },
+      "required": [
+        "fields"
+      ],
+      "title": "ProbeInput",
+      "type": "object"
+    },
+    "ProbeInputField": {
+      "enum": [
+        "ask",
+        "answer",
+        "tool_names",
+        "card_titles",
+        "invariant_rule"
+      ],
+      "title": "ProbeInputField",
+      "type": "string"
+    },
+    "ProbeInputFieldSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/ProbeInputField",
+          "description": "short text field of the step the probe may read",
+          "title": "name"
+        },
+        "max_chars": {
+          "description": "longer text is never truncated: the step goes to the judge as too_long",
+          "maximum": 2000,
+          "minimum": 1,
+          "title": "Max Chars",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "name",
+        "max_chars"
+      ],
+      "title": "ProbeInputFieldSpec",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": 1,
+      "description": "version of the probe file format",
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "probes": {
+      "items": {
+        "$ref": "#/$defs/ProbeDefinition"
+      },
+      "minItems": 1,
+      "title": "Probes",
+      "type": "array"
+    }
+  },
+  "required": [
+    "schema_version",
+    "probes"
+  ],
+  "type": "object"
+}

@@ -1,0 +1,81 @@
+{
+  "schemas": [
+    {
+      "name": "bundle",
+      "version": 1,
+      "url": "bundle.v1.json",
+      "sha256": "2260d67f13f2b6f4bb72381cc5f2f3681ae77b556e82c7e20f93e8089b7fd676",
+      "stage": 0
+    },
+    {
+      "name": "stream-event",
+      "version": 1,
+      "url": "stream-event.v1.json",
+      "sha256": "ba76e09f372f231970c3b34150866413346bdde4ec884dda9d6c0693ba787b5b",
+      "stage": 0
+    },
+    {
+      "name": "scenario",
+      "version": 1,
+      "url": "scenario.v1.json",
+      "sha256": "4642ec002ce162f39d1a94881af283d998653fff33d0d6ea0da62bef66f41027",
+      "stage": 2
+    },
+    {
+      "name": "probe",
+      "version": 1,
+      "url": "probe.v1.json",
+      "sha256": "177d2544a464baead66a177c5cef746c48a01a63c73b5db756346a0d54b9331d",
+      "stage": 4
+    },
+    {
+      "name": "finding",
+      "version": 1,
+      "url": "finding.v1.json",
+      "sha256": "1364ca5b4e5eb4e16a1006023b206ade37ac634f7da67ac3ab61738321374b54",
+      "stage": 5
+    },
+    {
+      "name": "persona",
+      "version": 1,
+      "url": "persona.v1.json",
+      "sha256": "c6ee51544c4c66cd5f8f7e9bda79f52bb0243756f1d8b785cbfce331f57d1480",
+      "stage": 7
+    },
+    {
+      "name": "goal",
+      "version": 1,
+      "url": "goal.v1.json",
+      "sha256": "090effb89c4703831a9c29ac174f319089332751c0e0ac1ca4007bb3201056e0",
+      "stage": 7
+    },
+    {
+      "name": "mutant",
+      "version": 1,
+      "url": "mutant.v1.json",
+      "sha256": "b024ce98f0d00dc6159665e4e02f904e174220d712410d58045f9ec98736510b",
+      "stage": 8
+    },
+    {
+      "name": "schedule",
+      "version": 1,
+      "url": "schedule.v1.json",
+      "sha256": "1d1ab04ae36cb1745c80e304bee49cc1c31d8d2df86a17bf117f28e4d6bfc7d5",
+      "stage": 8
+    },
+    {
+      "name": "report",
+      "version": 1,
+      "url": "report.v1.json",
+      "sha256": "ab2ac0e302be0057536a08a437fad548514b4df467bb32ba995a9e8b61f84798",
+      "stage": 8
+    },
+    {
+      "name": "proposal",
+      "version": 1,
+      "url": "proposal.v1.json",
+      "sha256": "aaa182957155155d52781335170e0a5d6868413b6c7055960ca9d421d6d5c22c",
+      "stage": 11
+    }
+  ]
+}

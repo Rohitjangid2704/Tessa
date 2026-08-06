@@ -1,0 +1,124 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "goal.v1.json",
+  "title": "Goal",
+  "description": "What a simulated user or an explorer tries to achieve and how success is decided.",
+  "$defs": {
+    "GoalKind": {
+      "enum": [
+        "reach_state",
+        "extract_fact",
+        "attempt_forbidden",
+        "complete_flow"
+      ],
+      "title": "GoalKind",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "title": {
+      "description": "Short name that tells goals apart in lists.",
+      "examples": [
+        "Report a broken air conditioner"
+      ],
+      "maxLength": 120,
+      "minLength": 1,
+      "title": "Title",
+      "type": "string",
+      "x-ui": {
+        "group": "What",
+        "label": "Title",
+        "order": 1,
+        "widget": "text"
+      }
+    },
+    "kind": {
+      "$ref": "#/$defs/GoalKind",
+      "description": "reach_state: get the app into a target state; extract_fact: get one specific fact stated; attempt_forbidden: try an action the role must not be allowed to do; complete_flow: finish a multi-step flow.",
+      "examples": [
+        "complete_flow"
+      ],
+      "title": "Kind",
+      "x-ui": {
+        "group": "What",
+        "label": "Kind of goal",
+        "order": 2,
+        "widget": "select"
+      }
+    },
+    "statement": {
+      "description": "The goal in the user's own words; the agent works toward it.",
+      "examples": [
+        "My room's air conditioner does not cool. I want it fixed today."
+      ],
+      "maxLength": 2000,
+      "minLength": 1,
+      "title": "Statement",
+      "type": "string",
+      "x-ui": {
+        "group": "What",
+        "label": "Statement",
+        "order": 3,
+        "widget": "textarea"
+      }
+    },
+    "success_criteria": {
+      "description": "Each entry starts with a typed prefix: db: (an end-state expectation checked by code against the truth source), tool: (a tool-call expectation checked by code), text: (a substring or pattern checked by code) or judge: (a natural-language criterion decided by the judge from the evidence block). An entry without a prefix means judge:. db: <oracle> [{params}] [row_count=N] [min_rows=N] [max_rows=N] [first_row={...}] [rows=[{...}]] [retry=SECONDS] runs an approved oracle of the bundle after the session; without an assertion at least one row is expected. tool: [not] <tool_name> [{args}] expects the target to have called (or, with not, never called) that tool during the session. text: [not] <text> or text: [not] /regex/ looks for the text (case-insensitive) in the replies of the target; put a text that starts with not in double quotes. judge: <criterion in plain words> is decided by the judge from the transcript.",
+      "examples": [
+        [
+          "db: maintenance_requests {\"room\": \"1204\"} min_rows=1 retry=5",
+          "tool: create_request",
+          "text: confirmation number",
+          "judge: the assistant promised no specific repair time"
+        ]
+      ],
+      "items": {
+        "maxLength": 500,
+        "minLength": 1,
+        "pattern": "^(?!(?:db|tool|text|judge):\\s*$)\\S",
+        "type": "string"
+      },
+      "maxItems": 20,
+      "title": "Success criteria",
+      "type": "array",
+      "x-ui": {
+        "group": "Success",
+        "label": "Success criteria",
+        "order": 4,
+        "widget": "chips"
+      }
+    },
+    "role": {
+      "anyOf": [
+        {
+          "maxLength": 80,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "App role the agent signs in as; empty means it is chosen when a run starts.",
+      "examples": [
+        "guest"
+      ],
+      "title": "Role",
+      "x-ui": {
+        "group": "Who",
+        "label": "Role",
+        "order": 5,
+        "widget": "text"
+      }
+    }
+  },
+  "required": [
+    "title",
+    "kind",
+    "statement",
+    "success_criteria"
+  ],
+  "type": "object"
+}

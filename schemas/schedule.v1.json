@@ -1,0 +1,166 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schedule.v1.json",
+  "title": "Schedule",
+  "description": "A recurring run of one saved plan: when it fires, how much it may spend and who hears about it.",
+  "$defs": {
+    "Budget": {
+      "properties": {
+        "max_usd": {
+          "description": "spend ceiling in USD",
+          "minimum": 0,
+          "title": "Max Usd",
+          "type": "number"
+        },
+        "max_minutes": {
+          "description": "wall clock ceiling in minutes",
+          "minimum": 1,
+          "title": "Max Minutes",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "max_usd",
+        "max_minutes"
+      ],
+      "title": "Budget",
+      "type": "object"
+    },
+    "ScheduleNotify": {
+      "additionalProperties": false,
+      "description": "Where a finished scheduled run is announced.",
+      "properties": {
+        "slack": {
+          "default": false,
+          "description": "Post the summary to the Slack webhook set in Settings.",
+          "title": "Slack",
+          "type": "boolean",
+          "x-ui": {
+            "group": "Notify",
+            "label": "Slack",
+            "order": 1,
+            "widget": "toggle"
+          }
+        }
+      },
+      "title": "ScheduleNotify",
+      "type": "object"
+    },
+    "ScheduleTier": {
+      "enum": [
+        "commit",
+        "nightly",
+        "weekly"
+      ],
+      "title": "ScheduleTier",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "plan_id": {
+      "description": "The saved plan this schedule runs.",
+      "format": "uuid",
+      "title": "Plan",
+      "type": "string",
+      "x-ui": {
+        "group": "What",
+        "label": "Plan",
+        "order": 1,
+        "widget": "text"
+      }
+    },
+    "tier": {
+      "$ref": "#/$defs/ScheduleTier",
+      "default": "nightly",
+      "description": "commit runs from CI through run-now with depth smoke and no judge; nightly and weekly run on a cron.",
+      "title": "Tier",
+      "x-ui": {
+        "group": "When",
+        "label": "Tier",
+        "order": 2,
+        "widget": "select"
+      }
+    },
+    "cron": {
+      "anyOf": [
+        {
+          "maxLength": 120,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Five-field cron (minute hour day-of-month month day-of-week) read in the schedule time zone: numbers, ranges, lists, steps and month and weekday names; day of month and day of week cannot both be restricted. Required for nightly and weekly; the commit tier takes none.",
+      "examples": [
+        "0 2 * * *"
+      ],
+      "title": "Cron",
+      "x-ui": {
+        "group": "When",
+        "label": "Cron",
+        "order": 3,
+        "widget": "text"
+      }
+    },
+    "timezone": {
+      "default": "UTC",
+      "description": "IANA time zone name such as Europe/London. The cron is read in this zone.",
+      "examples": [
+        "Europe/London"
+      ],
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Time zone",
+      "type": "string",
+      "x-ui": {
+        "group": "When",
+        "label": "Time zone",
+        "order": 4,
+        "widget": "text"
+      }
+    },
+    "enabled": {
+      "default": true,
+      "description": "A disabled schedule keeps its settings and does not fire.",
+      "title": "Enabled",
+      "type": "boolean",
+      "x-ui": {
+        "group": "When",
+        "label": "Enabled",
+        "order": 5,
+        "widget": "toggle"
+      }
+    },
+    "budget": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Budget"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Optional ceilings for each run; the plan budget applies when empty.",
+      "title": "Budget",
+      "x-ui": {
+        "group": "Limits",
+        "label": "Budget",
+        "order": 6,
+        "widget": "json"
+      }
+    },
+    "notify": {
+      "$ref": "#/$defs/ScheduleNotify",
+      "description": "Where a finished run is announced.",
+      "title": "Notify"
+    }
+  },
+  "required": [
+    "plan_id"
+  ],
+  "type": "object"
+}

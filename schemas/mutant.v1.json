@@ -1,0 +1,180 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "mutant.v1.json",
+  "title": "Mutant",
+  "description": "One known bug: a branch of the app with a single deliberate defect, and the invariants that should catch it.",
+  "$defs": {
+    "DeployedMarker": {
+      "additionalProperties": false,
+      "description": "A QA-only route that proves which mutant is deployed: a mutation run reads it before it starts and marks every outcome errored, never survived, when the text is missing.",
+      "properties": {
+        "path": {
+          "description": "Path on the mutant's base URL, with a single leading slash.",
+          "examples": [
+            "/__qa/mutant"
+          ],
+          "maxLength": 200,
+          "minLength": 1,
+          "pattern": "^/([^/\\s\\\\][^\\s\\\\]*)?$",
+          "title": "Path",
+          "type": "string",
+          "x-ui": {
+            "group": "Deployed marker",
+            "label": "Path",
+            "order": 1,
+            "widget": "text"
+          }
+        },
+        "expected_text": {
+          "description": "Text the response body must contain when this mutant is the deployed build.",
+          "examples": [
+            "skip-tenant-filter-on-issue-list"
+          ],
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Expected text",
+          "type": "string",
+          "x-ui": {
+            "group": "Deployed marker",
+            "label": "Expected text",
+            "order": 2,
+            "widget": "text"
+          }
+        }
+      },
+      "required": [
+        "path",
+        "expected_text"
+      ],
+      "title": "Deployed marker",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "description": "A short slug that names the bug; unique per target.",
+      "examples": [
+        "skip-tenant-filter-on-issue-list"
+      ],
+      "maxLength": 120,
+      "minLength": 1,
+      "title": "Name",
+      "type": "string",
+      "x-ui": {
+        "group": "The bug",
+        "label": "Name",
+        "order": 10,
+        "widget": "text"
+      }
+    },
+    "branch": {
+      "description": "The git branch that carries the defect.",
+      "examples": [
+        "tessa/mutant/skip-tenant-filter-on-issue-list"
+      ],
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Branch",
+      "type": "string",
+      "x-ui": {
+        "group": "The bug",
+        "label": "Branch",
+        "order": 20,
+        "widget": "text"
+      }
+    },
+    "description": {
+      "description": "What the branch breaks, in a sentence or two.",
+      "examples": [
+        "The issue list query no longer filters by tenant."
+      ],
+      "maxLength": 2000,
+      "minLength": 1,
+      "title": "Description",
+      "type": "string",
+      "x-ui": {
+        "group": "The bug",
+        "label": "What it breaks",
+        "order": 30,
+        "widget": "textarea"
+      }
+    },
+    "expected_catchers": {
+      "description": "The invariants that should fail when this bug is present. A mutant that none of them catches survives.",
+      "examples": [
+        [
+          "tenant_isolation",
+          "count_consistency"
+        ]
+      ],
+      "items": {
+        "maxLength": 80,
+        "minLength": 1,
+        "type": "string"
+      },
+      "maxItems": 20,
+      "minItems": 1,
+      "title": "Expected catchers",
+      "type": "array",
+      "uniqueItems": true,
+      "x-ui": {
+        "group": "What should catch it",
+        "label": "Invariants that should catch it",
+        "order": 40,
+        "widget": "invariants"
+      }
+    },
+    "base_url": {
+      "anyOf": [
+        {
+          "maxLength": 500,
+          "minLength": 1,
+          "pattern": "^https?://\\S+$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Where the branch is deployed on QA. Required before the mutant can be marked deployed; a mutation run can also override it.",
+      "examples": [
+        "https://gracie-mutant-1.qa.example.test"
+      ],
+      "title": "Base URL",
+      "x-ui": {
+        "group": "Where it runs",
+        "label": "Deployed at",
+        "order": 50,
+        "widget": "text"
+      }
+    },
+    "deployed_marker": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/DeployedMarker"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Optional QA-only route that shows which build is deployed.",
+      "title": "Deployed marker",
+      "x-ui": {
+        "group": "Where it runs",
+        "label": "Deployed marker",
+        "order": 60,
+        "widget": "json"
+      }
+    }
+  },
+  "required": [
+    "name",
+    "branch",
+    "description",
+    "expected_catchers"
+  ],
+  "type": "object"
+}

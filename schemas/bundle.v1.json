@@ -1,0 +1,3382 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "bundle.v1.json",
+  "title": "Tessa bundle manifest",
+  "description": "The machine-readable manifest.yaml of a Tessa bundle: everything Tessa needs to test a running app from outside. Placeholders ${NAME} stand in for every secret. Unknown top-level keys are errors; unknown keys inside a section are kept. This schema checks shape only: Tessa also checks on upload that every reference resolves (feature interfaces, roles and flags, truth source and seed variables, ids unique) and that every ${NAME} placeholder is declared in environment. The same bundle carries oracle/<name>.yaml (OracleSidecar), flows/<id>.yaml (Flow) and env.template (EnvTemplate), and may carry the optional file mutants.yaml (MutantsSidecar, a list of MutantFields entries written in the Mutants round-trip); their formats are defined under $defs.",
+  "$defs": {
+    "AdapterKind": {
+      "enum": [
+        "http",
+        "sse",
+        "websocket",
+        "graphql",
+        "browser"
+      ],
+      "title": "AdapterKind",
+      "type": "string"
+    },
+    "AppKind": {
+      "enum": [
+        "web",
+        "api",
+        "llm_assistant",
+        "worker",
+        "cli"
+      ],
+      "title": "AppKind",
+      "type": "string"
+    },
+    "AppSection": {
+      "additionalProperties": true,
+      "description": "What the app is, how to start it and where its health and base paths are.",
+      "properties": {
+        "name": {
+          "description": "Display name of the app under test.",
+          "examples": [
+            "Gracie"
+          ],
+          "minLength": 1,
+          "title": "Name",
+          "type": "string",
+          "x-ui": {
+            "group": "App",
+            "label": "Name",
+            "order": 1,
+            "widget": "text"
+          }
+        },
+        "summary": {
+          "description": "One paragraph on what the app does and who uses it.",
+          "examples": [
+            "A voice-first assistant that answers hotel guest questions from live property data."
+          ],
+          "title": "Summary",
+          "type": "string",
+          "x-ui": {
+            "group": "App",
+            "label": "Summary",
+            "order": 2,
+            "widget": "textarea"
+          }
+        },
+        "kind": {
+          "$ref": "#/$defs/AppKind",
+          "description": "Shape of the app, which selects the Tessa hints.",
+          "examples": [
+            "llm_assistant"
+          ],
+          "title": "Kind",
+          "x-ui": {
+            "group": "App",
+            "label": "Kind",
+            "order": 3,
+            "widget": "select"
+          }
+        },
+        "how_to_run": {
+          "description": "Commands or steps that start the app locally or in QA.",
+          "examples": [
+            "docker compose up -d && npm run dev"
+          ],
+          "title": "How to run",
+          "type": "string",
+          "x-ui": {
+            "group": "App",
+            "label": "How to run",
+            "order": 4,
+            "widget": "textarea"
+          }
+        },
+        "health_endpoints": {
+          "description": "Method and path of each liveness or readiness endpoint.",
+          "examples": [
+            [
+              "GET /health"
+            ]
+          ],
+          "items": {
+            "type": "string"
+          },
+          "title": "Health endpoints",
+          "type": "array",
+          "x-ui": {
+            "group": "App",
+            "label": "Health endpoints",
+            "order": 5,
+            "widget": "chips"
+          }
+        },
+        "ports": {
+          "description": "TCP ports the app listens on.",
+          "examples": [
+            [
+              8080,
+              3000
+            ]
+          ],
+          "items": {
+            "maximum": 65535,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "title": "Ports",
+          "type": "array",
+          "x-ui": {
+            "group": "App",
+            "label": "Ports",
+            "order": 6,
+            "widget": "chips"
+          }
+        },
+        "base_paths": {
+          "description": "URL path prefixes the app serves.",
+          "examples": [
+            [
+              "/api/v1"
+            ]
+          ],
+          "items": {
+            "type": "string"
+          },
+          "title": "Base paths",
+          "type": "array",
+          "x-ui": {
+            "group": "App",
+            "label": "Base paths",
+            "order": 7,
+            "widget": "chips"
+          }
+        }
+      },
+      "required": [
+        "name",
+        "summary",
+        "kind",
+        "how_to_run"
+      ],
+      "title": "App",
+      "type": "object"
+    },
+    "CleanupSection": {
+      "additionalProperties": true,
+      "description": "What a test run leaves behind and what it costs.",
+      "properties": {
+        "irreversible": {
+          "description": "Actions that cannot be undone.",
+          "examples": [
+            [
+              "sent notification emails"
+            ]
+          ],
+          "items": {
+            "type": "string"
+          },
+          "title": "Irreversible",
+          "type": "array",
+          "x-ui": {
+            "group": "Notes",
+            "label": "Irreversible",
+            "order": 1,
+            "widget": "chips"
+          }
+        },
+        "delete_after_run": {
+          "description": "Things to remove after a run.",
+          "examples": [
+            [
+              "issues created by the suite"
+            ]
+          ],
+          "items": {
+            "type": "string"
+          },
+          "title": "Delete after run",
+          "type": "array",
+          "x-ui": {
+            "group": "Notes",
+            "label": "Delete after run",
+            "order": 2,
+            "widget": "chips"
+          }
+        },
+        "costs_money": {
+          "description": "Actions that incur charges.",
+          "examples": [
+            [
+              "SMS sends"
+            ]
+          ],
+          "items": {
+            "type": "string"
+          },
+          "title": "Costs money",
+          "type": "array",
+          "x-ui": {
+            "group": "Notes",
+            "label": "Costs money",
+            "order": 3,
+            "widget": "chips"
+          }
+        }
+      },
+      "title": "Cleanup",
+      "type": "object"
+    },
+    "Confidence": {
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "title": "Confidence",
+      "type": "string"
+    },
+    "ConsumedCall": {
+      "additionalProperties": true,
+      "description": "A call this app sends to another app: the request shape it sends and the response fields it reads. The contract check compares it with the interfaces of the provider bundle.",
+      "properties": {
+        "id": {
+          "description": "Slug of the call, unique within consumes.",
+          "examples": [
+            "calendar_event_push"
+          ],
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Id",
+          "type": "string",
+          "x-ui": {
+            "group": "Consumes",
+            "label": "Id",
+            "order": 1,
+            "widget": "text"
+          }
+        },
+        "provider_hint": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Name or slug of the app that receives the call, when the code says so.",
+          "examples": [
+            "hotel-ops"
+          ],
+          "title": "Provider hint",
+          "x-ui": {
+            "group": "Consumes",
+            "label": "Provider hint",
+            "order": 2,
+            "widget": "text"
+          }
+        },
+        "method": {
+          "description": "HTTP method of the call.",
+          "examples": [
+            "POST"
+          ],
+          "minLength": 1,
+          "title": "Method",
+          "type": "string",
+          "x-ui": {
+            "group": "Consumes",
+            "label": "Method",
+            "order": 3,
+            "widget": "text"
+          }
+        },
+        "path": {
+          "description": "Path the call is sent to, below the provider interface base path; {name} segments stand for path parameters.",
+          "examples": [
+            "/calendar/events"
+          ],
+          "minLength": 1,
+          "title": "Path",
+          "type": "string",
+          "x-ui": {
+            "group": "Consumes",
+            "label": "Path",
+            "order": 4,
+            "widget": "text"
+          }
+        },
+        "auth_scheme": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Authentication scheme the call presents, such as bearer or api_key.",
+          "examples": [
+            "bearer"
+          ],
+          "title": "Auth scheme",
+          "x-ui": {
+            "group": "Consumes",
+            "label": "Auth scheme",
+            "order": 5,
+            "widget": "text"
+          }
+        },
+        "request": {
+          "additionalProperties": true,
+          "description": "Shape of what the call sends: a JSON Schema of the request body, or a real example body.",
+          "examples": [
+            {
+              "required": [
+                "title",
+                "starts_at"
+              ],
+              "type": "object"
+            }
+          ],
+          "title": "Request",
+          "type": "object",
+          "x-ui": {
+            "group": "Consumes",
+            "label": "Request",
+            "order": 6,
+            "widget": "yaml"
+          }
+        },
+        "reads": {
+          "description": "Fields of the response this app reads, as dotted paths from the response body root.",
+          "examples": [
+            [
+              "data.id",
+              "data.status"
+            ]
+          ],
+          "items": {
+            "type": "string"
+          },
+          "title": "Reads",
+          "type": "array",
+          "x-ui": {
+            "group": "Consumes",
+            "label": "Reads",
+            "order": 7,
+            "widget": "chips"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "method",
+        "path",
+        "request",
+        "reads"
+      ],
+      "title": "Consumed call",
+      "type": "object"
+    },
+    "DataModel": {
+      "additionalProperties": true,
+      "description": "Where the app keeps its data and how rows are scoped.",
+      "properties": {
+        "stores": {
+          "description": "Databases or other stores the app uses.",
+          "examples": [
+            [
+              {
+                "kind": "postgres",
+                "name": "primary"
+              }
+            ]
+          ],
+          "items": {
+            "$ref": "#/$defs/DataStore"
+          },
+          "title": "Stores",
+          "type": "array",
+          "x-ui": {
+            "group": "Data",
+            "label": "Stores",
+            "order": 1,
+            "widget": "yaml"
+          }
+        },
+        "timezone": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "How the app handles time zones.",
+          "examples": [
+            "UTC in storage, property local time in UI"
+          ],
+          "title": "Timezone",
+          "x-ui": {
+            "group": "Data",
+            "label": "Timezone",
+            "order": 2,
+            "widget": "text"
+          }
+        }
+      },
+      "title": "Data model",
+      "type": "object"
+    },
+    "DataStore": {
+      "additionalProperties": true,
+      "description": "A database or other store the app uses.",
+      "properties": {
+        "name": {
+          "description": "Name of the store.",
+          "examples": [
+            "primary"
+          ],
+          "minLength": 1,
+          "title": "Name",
+          "type": "string",
+          "x-ui": {
+            "group": "Data",
+            "label": "Name",
+            "order": 1,
+            "widget": "text"
+          }
+        },
+        "kind": {
+          "description": "Engine of the store such as postgres, mysql, mongodb or redis.",
+          "examples": [
+            "postgres"
+          ],
+          "minLength": 1,
+          "title": "Kind",
+          "type": "string",
+          "x-ui": {
+            "group": "Data",
+            "label": "Kind",
+            "order": 2,
+            "widget": "select"
+          }
+        },
+        "entities": {
+          "description": "Tables or collections that matter for testing.",
+          "examples": [
+            [
+              {
+                "name": "maintenance_issue",
+                "tenant_field": "property_id"
+              }
+            ]
+          ],
+          "items": {
+            "$ref": "#/$defs/Entity"
+          },
+          "title": "Entities",
+          "type": "array",
+          "x-ui": {
+            "group": "Data",
+            "label": "Entities",
+            "order": 3,
+            "widget": "yaml"
+          }
+        }
+      },
+      "required": [
+        "name",
+        "kind"
+      ],
+      "title": "Data store",
+      "type": "object"
+    },
+    "Entity": {
+      "additionalProperties": true,
+      "description": "A table or collection of one store.",
+      "properties": {
+        "name": {
+          "description": "Table or collection name.",
+          "examples": [
+            "maintenance_issue"
+          ],
+          "minLength": 1,
+          "title": "Name",
+          "type": "string",
+          "x-ui": {
+            "group": "Data",
+            "label": "Name",
+            "order": 1,
+            "widget": "text"
+          }
+        },
+        "key_fields": {
+          "description": "Fields that identify or define the entity.",
+          "examples": [
+            [
+              "id",
+              "room_id"
+            ]
+          ],
+          "items": {
+            "type": "string"
+          },
+          "title": "Key fields",
+          "type": "array",
+          "x-ui": {
+            "group": "Data",
+            "label": "Key fields",
+            "order": 2,
+            "widget": "chips"
+          }
+        },
+        "tenant_field": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Field that scopes a row to a tenant.",
+          "examples": [
+            "property_id"
+          ],
+          "title": "Tenant field",
+          "x-ui": {
+            "group": "Data",
+            "label": "Tenant field",
+            "order": 3,
+            "widget": "text"
+          }
+        },
+        "status_fields": {
+          "description": "Fields that hold a lifecycle status.",
+          "examples": [
+            [
+              "status"
+            ]
+          ],
+          "items": {
+            "type": "string"
+          },
+          "title": "Status fields",
+          "type": "array",
+          "x-ui": {
+            "group": "Data",
+            "label": "Status fields",
+            "order": 4,
+            "widget": "chips"
+          }
+        },
+        "soft_delete": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "How deleted rows are marked, if they are kept.",
+          "examples": [
+            "deleted_at is not null"
+          ],
+          "title": "Soft delete",
+          "x-ui": {
+            "group": "Data",
+            "label": "Soft delete",
+            "order": 5,
+            "widget": "text"
+          }
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "Entity",
+      "type": "object"
+    },
+    "EnvVarKind": {
+      "enum": [
+        "url",
+        "dsn",
+        "token",
+        "password",
+        "string",
+        "number",
+        "bool"
+      ],
+      "title": "EnvVarKind",
+      "type": "string"
+    },
+    "EnvironmentVariable": {
+      "additionalProperties": true,
+      "description": "A value Tessa needs to reach or inspect the app.",
+      "properties": {
+        "name": {
+          "description": "Variable name; placeholders in the bundle use ${NAME}.",
+          "examples": [
+            "GRACIE_BASE_URL"
+          ],
+          "pattern": "^[A-Z][A-Z0-9_]*$",
+          "title": "Name",
+          "type": "string",
+          "x-ui": {
+            "group": "Environment",
+            "label": "Name",
+            "order": 1,
+            "widget": "text"
+          }
+        },
+        "kind": {
+          "$ref": "#/$defs/EnvVarKind",
+          "default": "string",
+          "description": "What the value is.",
+          "examples": [
+            "url"
+          ],
+          "title": "Kind",
+          "x-ui": {
+            "group": "Environment",
+            "label": "Kind",
+            "order": 2,
+            "widget": "select"
+          }
+        },
+        "secret": {
+          "default": true,
+          "description": "Whether the value is a secret; secrets are never shown again.",
+          "examples": [
+            false
+          ],
+          "title": "Secret",
+          "type": "boolean",
+          "x-ui": {
+            "group": "Environment",
+            "label": "Secret",
+            "order": 3,
+            "widget": "toggle"
+          }
+        },
+        "required": {
+          "default": true,
+          "description": "Whether Tessa cannot run without the value.",
+          "examples": [
+            true
+          ],
+          "title": "Required",
+          "type": "boolean",
+          "x-ui": {
+            "group": "Environment",
+            "label": "Required",
+            "order": 4,
+            "widget": "toggle"
+          }
+        },
+        "purpose": {
+          "default": "",
+          "description": "One line on what the value is used for.",
+          "examples": [
+            "Base URL of the QA deployment"
+          ],
+          "title": "Purpose",
+          "type": "string",
+          "x-ui": {
+            "group": "Environment",
+            "label": "Purpose",
+            "order": 5,
+            "widget": "text"
+          }
+        },
+        "interfaces": {
+          "description": "Ids of the interfaces the value belongs to.",
+          "examples": [
+            [
+              "chat_sse"
+            ]
+          ],
+          "items": {
+            "type": "string"
+          },
+          "title": "Interfaces",
+          "type": "array",
+          "x-ui": {
+            "group": "Environment",
+            "label": "Interfaces",
+            "order": 6,
+            "widget": "chips"
+          }
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "Environment variable",
+      "type": "object"
+    },
+    "Feature": {
+      "additionalProperties": true,
+      "description": "One testable thing the app does; the catalog is built from these.",
+      "properties": {
+        "id": {
+          "description": "Stable id, unique per target across bundle versions.",
+          "examples": [
+            "smart_log.read.open_maintenance"
+          ],
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Id",
+          "type": "string",
+          "x-ui": {
+            "group": "Features",
+            "label": "Id",
+            "order": 1,
+            "widget": "text"
+          }
+        },
+        "area": {
+          "description": "Product area the feature belongs to.",
+          "examples": [
+            "Smart Log"
+          ],
+          "minLength": 1,
+          "title": "Area",
+          "type": "string",
+          "x-ui": {
+            "group": "Features",
+            "label": "Area",
+            "order": 2,
+            "widget": "text"
+          }
+        },
+        "kind": {
+          "$ref": "#/$defs/FeatureKind",
+          "description": "What sort of behaviour this is.",
+          "examples": [
+            "read"
+          ],
+          "title": "Kind",
+          "x-ui": {
+            "group": "Features",
+            "label": "Kind",
+            "order": 3,
+            "widget": "select"
+          }
+        },
+        "description": {
+          "description": "What the feature does, in one or two sentences.",
+          "examples": [
+            "List maintenance issues that are still open, optionally per room"
+          ],
+          "minLength": 1,
+          "title": "Description",
+          "type": "string",
+          "x-ui": {
+            "group": "Features",
+            "label": "Description",
+            "order": 4,
+            "widget": "textarea"
+          }
+        },
+        "interfaces": {
+          "description": "Ids of the interfaces that expose the feature.",
+          "examples": [
+            [
+              "chat_sse",
+              "browser"
+            ]
+          ],
+          "items": {
+            "type": "string"
+          },
+          "title": "Interfaces",
+          "type": "array",
+          "x-ui": {
+            "group": "Features",
+            "label": "Interfaces",
+            "order": 5,
+            "widget": "chips"
+          }
+        },
+        "roles": {
+          "description": "Ids of the roles that may use the feature, or all.",
+          "examples": [
+            [
+              "all"
+            ]
+          ],
+          "items": {
+            "type": "string"
+          },
+          "title": "Roles",
+          "type": "array",
+          "x-ui": {
+            "group": "Features",
+            "label": "Roles",
+            "order": 6,
+            "widget": "chips"
+          }
+        },
+        "flag": {
+          "default": "none",
+          "description": "Feature flag that gates the feature, or none.",
+          "examples": [
+            "none"
+          ],
+          "title": "Flag",
+          "type": "string",
+          "x-ui": {
+            "group": "Features",
+            "label": "Flag",
+            "order": 7,
+            "widget": "text"
+          }
+        },
+        "preconditions": {
+          "description": "Seed fixtures or states that must hold first.",
+          "examples": [
+            [
+              "seed.smart_log_history"
+            ]
+          ],
+          "items": {
+            "type": "string"
+          },
+          "title": "Preconditions",
+          "type": "array",
+          "x-ui": {
+            "group": "Features",
+            "label": "Preconditions",
+            "order": 8,
+            "widget": "chips"
+          }
+        },
+        "examples": {
+          "description": "Concrete inputs with the expected behaviour.",
+          "examples": [
+            [
+              {
+                "ask": "Which maintenance issues are still open?",
+                "expected": "count of open items"
+              }
+            ]
+          ],
+          "items": {
+            "$ref": "#/$defs/FeatureExample"
+          },
+          "title": "Examples",
+          "type": "array",
+          "x-ui": {
+            "group": "Features",
+            "label": "Examples",
+            "order": 9,
+            "widget": "yaml"
+          }
+        },
+        "invariants": {
+          "description": "Ids of the invariants that apply to the feature.",
+          "examples": [
+            [
+              "no_internal_ids",
+              "count_matches_oracle"
+            ]
+          ],
+          "items": {
+            "type": "string"
+          },
+          "title": "Invariants",
+          "type": "array",
+          "x-ui": {
+            "group": "Features",
+            "label": "Invariants",
+            "order": 10,
+            "widget": "chips"
+          }
+        },
+        "cleanup": {
+          "default": "none",
+          "description": "How to undo a write the feature makes, or none.",
+          "examples": [
+            "none"
+          ],
+          "title": "Cleanup",
+          "type": "string",
+          "x-ui": {
+            "group": "Features",
+            "label": "Cleanup",
+            "order": 11,
+            "widget": "text"
+          }
+        },
+        "confidence": {
+          "$ref": "#/$defs/Confidence",
+          "default": "medium",
+          "description": "How sure the author is that this entry matches the code.",
+          "examples": [
+            "high"
+          ],
+          "x-ui": {
+            "group": "Features",
+            "label": "Confidence",
+            "order": 12,
+            "widget": "select"
+          },
+          "title": "Confidence"
+        },
+        "writes_to": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Entity a write feature changes.",
+          "examples": [
+            "maintenance_issue"
+          ],
+          "title": "Writes to",
+          "x-ui": {
+            "group": "Features",
+            "label": "Writes to",
+            "order": 13,
+            "widget": "text"
+          }
+        },
+        "confirmation": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "How a write is confirmed before it takes effect.",
+          "examples": [
+            "button-only, typed yes accepted"
+          ],
+          "title": "Confirmation",
+          "x-ui": {
+            "group": "Features",
+            "label": "Confirmation",
+            "order": 14,
+            "widget": "text"
+          }
+        },
+        "expect_db": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The row or change a write must leave behind.",
+          "examples": [
+            {
+              "table": "maintenance_issue",
+              "where": {
+                "status": "open"
+              }
+            }
+          ],
+          "title": "Expected database change",
+          "x-ui": {
+            "group": "Features",
+            "label": "Expected database change",
+            "order": 15,
+            "widget": "yaml"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "area",
+        "kind",
+        "description"
+      ],
+      "title": "Feature",
+      "type": "object"
+    },
+    "FeatureExample": {
+      "additionalProperties": true,
+      "description": "One concrete input with the behaviour expected from it.",
+      "properties": {
+        "ask": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Natural language input, for chat features.",
+          "examples": [
+            "Which maintenance issues are still open?"
+          ],
+          "title": "Ask",
+          "x-ui": {
+            "group": "Features",
+            "label": "Ask",
+            "order": 1,
+            "widget": "text"
+          }
+        },
+        "request": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Structured request, for API features.",
+          "examples": [
+            {
+              "method": "GET",
+              "path": "/rooms"
+            }
+          ],
+          "title": "Request",
+          "x-ui": {
+            "group": "Features",
+            "label": "Request",
+            "order": 2,
+            "widget": "yaml"
+          }
+        },
+        "expected": {
+          "description": "Behaviour the app must show, in words an oracle can check.",
+          "examples": [
+            "count of open items and the rooms with the most, from the oracle"
+          ],
+          "minLength": 1,
+          "title": "Expected",
+          "type": "string",
+          "x-ui": {
+            "group": "Features",
+            "label": "Expected",
+            "order": 3,
+            "widget": "textarea"
+          }
+        },
+        "oracle": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Name of the oracle that computes the expected result.",
+          "examples": [
+            "open_maintenance"
+          ],
+          "title": "Oracle",
+          "x-ui": {
+            "group": "Features",
+            "label": "Oracle",
+            "order": 4,
+            "widget": "text"
+          }
+        }
+      },
+      "required": [
+        "expected"
+      ],
+      "title": "Feature example",
+      "type": "object"
+    },
+    "FeatureKind": {
+      "enum": [
+        "read",
+        "write",
+        "flow",
+        "auth",
+        "admin",
+        "stream",
+        "job"
+      ],
+      "title": "FeatureKind",
+      "type": "string"
+    },
+    "Flag": {
+      "additionalProperties": true,
+      "description": "A feature flag that changes app behaviour.",
+      "properties": {
+        "id": {
+          "description": "Slug features use in their flag field.",
+          "examples": [
+            "new_checkout"
+          ],
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Id",
+          "type": "string",
+          "x-ui": {
+            "group": "Flags",
+            "label": "Id",
+            "order": 1,
+            "widget": "text"
+          }
+        },
+        "env_var": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Environment variable that sets the flag.",
+          "examples": [
+            "FEATURE_NEW_CHECKOUT"
+          ],
+          "title": "Variable",
+          "x-ui": {
+            "group": "Flags",
+            "label": "Variable",
+            "order": 2,
+            "widget": "text"
+          }
+        },
+        "description": {
+          "default": "",
+          "description": "What the flag changes.",
+          "examples": [
+            "Switches to the single page checkout"
+          ],
+          "title": "Description",
+          "type": "string",
+          "x-ui": {
+            "group": "Flags",
+            "label": "Description",
+            "order": 3,
+            "widget": "textarea"
+          }
+        },
+        "affects": {
+          "description": "Ids of the features the flag changes.",
+          "examples": [
+            [
+              "shop.write.checkout"
+            ]
+          ],
+          "items": {
+            "type": "string"
+          },
+          "title": "Affects",
+          "type": "array",
+          "x-ui": {
+            "group": "Flags",
+            "label": "Affects",
+            "order": 4,
+            "widget": "chips"
+          }
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "title": "Flag",
+      "type": "object"
+    },
+    "Interface": {
+      "additionalProperties": true,
+      "description": "One way a client reaches the app.",
+      "properties": {
+        "id": {
+          "description": "Slug other sections use to refer to this interface.",
+          "examples": [
+            "chat_sse"
+          ],
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Id",
+          "type": "string",
+          "x-ui": {
+            "group": "Interfaces",
+            "label": "Id",
+            "order": 1,
+            "widget": "text"
+          }
+        },
+        "kind": {
+          "$ref": "#/$defs/AdapterKind",
+          "description": "Protocol Tessa speaks to this interface.",
+          "examples": [
+            "sse"
+          ],
+          "title": "Kind",
+          "x-ui": {
+            "group": "Interfaces",
+            "label": "Kind",
+            "order": 2,
+            "widget": "select"
+          }
+        },
+        "base_path": {
+          "description": "Path prefix, or URL, of the interface.",
+          "examples": [
+            "/api/chat"
+          ],
+          "title": "Base path",
+          "type": "string",
+          "x-ui": {
+            "group": "Interfaces",
+            "label": "Base path",
+            "order": 3,
+            "widget": "text"
+          }
+        },
+        "auth": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/InterfaceAuth"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "How a client authenticates to this interface.",
+          "examples": [
+            {
+              "header": "Authorization",
+              "type": "bearer"
+            }
+          ],
+          "title": "Auth",
+          "x-ui": {
+            "group": "Interfaces",
+            "label": "Auth",
+            "order": 4,
+            "widget": "yaml"
+          }
+        },
+        "health_endpoint": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Path that answers 2xx while the interface is up.",
+          "examples": [
+            "/health"
+          ],
+          "title": "Health endpoint",
+          "x-ui": {
+            "group": "Interfaces",
+            "label": "Health endpoint",
+            "order": 5,
+            "widget": "text"
+          }
+        },
+        "shapes": {
+          "description": "Request and response shapes with one real example each.",
+          "examples": [
+            [
+              {
+                "method": "POST",
+                "name": "send chat message",
+                "path": "/chat"
+              }
+            ]
+          ],
+          "items": {
+            "$ref": "#/$defs/InterfaceShape"
+          },
+          "title": "Shapes",
+          "type": "array",
+          "x-ui": {
+            "group": "Interfaces",
+            "label": "Shapes",
+            "order": 6,
+            "widget": "yaml"
+          }
+        },
+        "stream_events": {
+          "description": "Names of the events a streaming interface emits.",
+          "examples": [
+            [
+              "token",
+              "done"
+            ]
+          ],
+          "items": {
+            "type": "string"
+          },
+          "title": "Stream events",
+          "type": "array",
+          "x-ui": {
+            "group": "Interfaces",
+            "label": "Stream events",
+            "order": 7,
+            "widget": "chips"
+          }
+        },
+        "rate_limits": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Limits the interface enforces.",
+          "examples": [
+            "60 requests per minute per user"
+          ],
+          "title": "Rate limits",
+          "x-ui": {
+            "group": "Interfaces",
+            "label": "Rate limits",
+            "order": 8,
+            "widget": "text"
+          }
+        },
+        "idempotency": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Idempotency rules for writes on this interface.",
+          "examples": [
+            "Idempotency-Key header on every POST"
+          ],
+          "title": "Idempotency",
+          "x-ui": {
+            "group": "Interfaces",
+            "label": "Idempotency",
+            "order": 9,
+            "widget": "text"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "base_path"
+      ],
+      "title": "Interface",
+      "type": "object"
+    },
+    "InterfaceAuth": {
+      "additionalProperties": true,
+      "description": "How a client authenticates to one interface.",
+      "properties": {
+        "type": {
+          "description": "Authentication scheme such as none, bearer, api_key, basic, cookie, oauth2 or hmac_sha256 (signed webhook sends: header carries the signature and secret_env names the signing secret).",
+          "examples": [
+            "bearer",
+            "hmac_sha256"
+          ],
+          "minLength": 1,
+          "title": "Type",
+          "type": "string",
+          "x-ui": {
+            "group": "Interfaces",
+            "label": "Type",
+            "order": 1,
+            "widget": "select"
+          }
+        },
+        "header": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Header that carries the credential, or the signature for hmac_sha256.",
+          "examples": [
+            "Authorization",
+            "X-Signature-256"
+          ],
+          "title": "Header",
+          "x-ui": {
+            "group": "Interfaces",
+            "label": "Header",
+            "order": 2,
+            "widget": "text"
+          }
+        },
+        "token_source": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "How a token is obtained, keyed by role id.",
+          "examples": [
+            {
+              "admin": "POST /auth/login with ${ADMIN_EMAIL} and ${ADMIN_PASSWORD}"
+            }
+          ],
+          "title": "Token source",
+          "type": "object",
+          "x-ui": {
+            "group": "Interfaces",
+            "label": "Token source",
+            "order": 3,
+            "widget": "yaml"
+          }
+        },
+        "secret_env": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Z][A-Z0-9_]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Environment variable that holds the HMAC signing secret; required when type is hmac_sha256 and ignored by every other scheme.",
+          "examples": [
+            "WEBHOOK_SIGNING_SECRET"
+          ],
+          "title": "Signing secret variable",
+          "x-ui": {
+            "group": "Interfaces",
+            "label": "Signing secret variable",
+            "order": 4,
+            "widget": "text"
+          }
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "title": "Interface auth",
+      "type": "object"
+    },
+    "InterfaceShape": {
+      "additionalProperties": true,
+      "description": "One request and response pair with a real example each.",
+      "properties": {
+        "name": {
+          "description": "Short name of the call.",
+          "examples": [
+            "send chat message"
+          ],
+          "minLength": 1,
+          "title": "Name",
+          "type": "string",
+          "x-ui": {
+            "group": "Interfaces",
+            "label": "Name",
+            "order": 1,
+            "widget": "text"
+          }
+        },
+        "method": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "HTTP method, when the interface is HTTP.",
+          "examples": [
+            "POST"
+          ],
+          "title": "Method",
+          "x-ui": {
+            "group": "Interfaces",
+            "label": "Method",
+            "order": 2,
+            "widget": "text"
+          }
+        },
+        "path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Path relative to the interface base path.",
+          "examples": [
+            "/chat"
+          ],
+          "title": "Path",
+          "x-ui": {
+            "group": "Interfaces",
+            "label": "Path",
+            "order": 3,
+            "widget": "text"
+          }
+        },
+        "request_schema": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "JSON Schema of the request body.",
+          "examples": [
+            {
+              "properties": {
+                "message": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          ],
+          "title": "Request schema",
+          "x-ui": {
+            "group": "Interfaces",
+            "label": "Request schema",
+            "order": 4,
+            "widget": "yaml"
+          }
+        },
+        "request_example": {
+          "default": null,
+          "description": "A real request body taken from the code or logs.",
+          "examples": [
+            {
+              "message": "Which rooms are still dirty?"
+            }
+          ],
+          "title": "Request example",
+          "x-ui": {
+            "group": "Interfaces",
+            "label": "Request example",
+            "order": 5,
+            "widget": "yaml"
+          }
+        },
+        "response_schema": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "JSON Schema of the response body.",
+          "examples": [
+            {
+              "properties": {
+                "answer": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          ],
+          "title": "Response schema",
+          "x-ui": {
+            "group": "Interfaces",
+            "label": "Response schema",
+            "order": 6,
+            "widget": "yaml"
+          }
+        },
+        "response_example": {
+          "default": null,
+          "description": "A real response body taken from the code or logs.",
+          "examples": [
+            {
+              "answer": "Three rooms are still dirty."
+            }
+          ],
+          "title": "Response example",
+          "x-ui": {
+            "group": "Interfaces",
+            "label": "Response example",
+            "order": 7,
+            "widget": "yaml"
+          }
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "Interface shape",
+      "type": "object"
+    },
+    "Invariant": {
+      "additionalProperties": true,
+      "description": "A rule that must always hold.",
+      "properties": {
+        "id": {
+          "description": "Slug features use to refer to this invariant.",
+          "examples": [
+            "no_internal_ids"
+          ],
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Id",
+          "type": "string",
+          "x-ui": {
+            "group": "Invariants",
+            "label": "Id",
+            "order": 1,
+            "widget": "text"
+          }
+        },
+        "rule": {
+          "description": "The rule in one sentence.",
+          "examples": [
+            "Responses never contain internal database ids"
+          ],
+          "minLength": 1,
+          "title": "Rule",
+          "type": "string",
+          "x-ui": {
+            "group": "Invariants",
+            "label": "Rule",
+            "order": 2,
+            "widget": "textarea"
+          }
+        },
+        "check": {
+          "description": "How the rule can be checked.",
+          "enum": [
+            "code",
+            "probe",
+            "oracle",
+            "db"
+          ],
+          "examples": [
+            "code"
+          ],
+          "title": "Check",
+          "type": "string",
+          "x-ui": {
+            "group": "Invariants",
+            "label": "Check",
+            "order": 3,
+            "widget": "select"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "rule",
+        "check"
+      ],
+      "title": "Invariant",
+      "type": "object"
+    },
+    "QaHook": {
+      "additionalProperties": true,
+      "description": "A QA-only hook of the app, present or missing.",
+      "properties": {
+        "id": {
+          "description": "Slug of the hook.",
+          "examples": [
+            "pin_clock"
+          ],
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Id",
+          "type": "string",
+          "x-ui": {
+            "group": "Hooks",
+            "label": "Id",
+            "order": 1,
+            "widget": "text"
+          }
+        },
+        "description": {
+          "description": "What the hook does or would do.",
+          "examples": [
+            "Pins the server clock to a given time"
+          ],
+          "minLength": 1,
+          "title": "Description",
+          "type": "string",
+          "x-ui": {
+            "group": "Hooks",
+            "label": "Description",
+            "order": 2,
+            "widget": "textarea"
+          }
+        },
+        "endpoint": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Method and path of an existing hook.",
+          "examples": [
+            "POST /qa/clock"
+          ],
+          "title": "Endpoint",
+          "x-ui": {
+            "group": "Hooks",
+            "label": "Endpoint",
+            "order": 3,
+            "widget": "text"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "description"
+      ],
+      "title": "Test hook",
+      "type": "object"
+    },
+    "QaHooks": {
+      "additionalProperties": true,
+      "description": "Which QA hooks the app has and which it lacks.",
+      "properties": {
+        "available": {
+          "description": "Hooks that exist today.",
+          "examples": [
+            [
+              {
+                "description": "Health probe",
+                "id": "health"
+              }
+            ]
+          ],
+          "items": {
+            "$ref": "#/$defs/QaHook"
+          },
+          "title": "Available",
+          "type": "array",
+          "x-ui": {
+            "group": "Hooks",
+            "label": "Available",
+            "order": 1,
+            "widget": "yaml"
+          }
+        },
+        "missing": {
+          "description": "Hooks the app lacks; a separate prompt asks for them.",
+          "examples": [
+            [
+              {
+                "description": "Pin the server clock",
+                "id": "pin_clock"
+              }
+            ]
+          ],
+          "items": {
+            "$ref": "#/$defs/QaHook"
+          },
+          "title": "Missing",
+          "type": "array",
+          "x-ui": {
+            "group": "Hooks",
+            "label": "Missing",
+            "order": 2,
+            "widget": "yaml"
+          }
+        }
+      },
+      "title": "Test hooks",
+      "type": "object"
+    },
+    "Role": {
+      "additionalProperties": true,
+      "description": "A kind of user and what the app lets that user see and do.",
+      "properties": {
+        "id": {
+          "description": "Slug features use to refer to this role.",
+          "examples": [
+            "admin"
+          ],
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Id",
+          "type": "string",
+          "x-ui": {
+            "group": "Roles",
+            "label": "Id",
+            "order": 1,
+            "widget": "text"
+          }
+        },
+        "level": {
+          "description": "Privilege rank; a higher number may do everything a lower one may.",
+          "examples": [
+            2
+          ],
+          "minimum": 0,
+          "title": "Level",
+          "type": "integer",
+          "x-ui": {
+            "group": "Roles",
+            "label": "Level",
+            "order": 2,
+            "widget": "number"
+          }
+        },
+        "description": {
+          "description": "Who holds this role.",
+          "examples": [
+            "Property manager"
+          ],
+          "title": "Description",
+          "type": "string",
+          "x-ui": {
+            "group": "Roles",
+            "label": "Description",
+            "order": 3,
+            "widget": "textarea"
+          }
+        },
+        "can_see": {
+          "description": "What this role may read.",
+          "examples": [
+            [
+              "all rooms of own property"
+            ]
+          ],
+          "items": {
+            "type": "string"
+          },
+          "title": "Can see",
+          "type": "array",
+          "x-ui": {
+            "group": "Roles",
+            "label": "Can see",
+            "order": 4,
+            "widget": "chips"
+          }
+        },
+        "can_do": {
+          "description": "What this role may change.",
+          "examples": [
+            [
+              "create maintenance issues"
+            ]
+          ],
+          "items": {
+            "type": "string"
+          },
+          "title": "Can do",
+          "type": "array",
+          "x-ui": {
+            "group": "Roles",
+            "label": "Can do",
+            "order": 5,
+            "widget": "chips"
+          }
+        },
+        "credential_env": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Z][A-Z0-9_]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Environment variable that holds this role's login or token.",
+          "examples": [
+            "ADMIN_TOKEN"
+          ],
+          "title": "Credential variable",
+          "x-ui": {
+            "group": "Roles",
+            "label": "Credential variable",
+            "order": 6,
+            "widget": "text"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "level",
+        "description"
+      ],
+      "title": "Role",
+      "type": "object"
+    },
+    "Seeds": {
+      "additionalProperties": true,
+      "description": "How a QA tenant is made to look the same on every run.",
+      "properties": {
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "How the seeded state is built.",
+          "examples": [
+            "Fixtures loaded by seeds/reset.sql"
+          ],
+          "title": "Description",
+          "x-ui": {
+            "group": "Seeds",
+            "label": "Description",
+            "order": 1,
+            "widget": "textarea"
+          }
+        },
+        "fixtures": {
+          "description": "Paths of fixture files, relative to the bundle folder, starting with seeds/.",
+          "examples": [
+            [
+              "seeds/fixtures.sql"
+            ]
+          ],
+          "items": {
+            "pattern": "^seeds(/[A-Za-z0-9_][A-Za-z0-9_.-]*)+$",
+            "type": "string"
+          },
+          "title": "Fixtures",
+          "type": "array",
+          "x-ui": {
+            "group": "Seeds",
+            "label": "Fixtures",
+            "order": 2,
+            "widget": "chips"
+          }
+        },
+        "reset_script": {
+          "anyOf": [
+            {
+              "pattern": "^seeds(/[A-Za-z0-9_][A-Za-z0-9_.-]*)*/[A-Za-z0-9_][A-Za-z0-9_.-]*\\.(sql|py|sh)$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Path of the script that restores the seeded state: seeds/ plus a .sql, .py or .sh file.",
+          "examples": [
+            "seeds/reset.sql"
+          ],
+          "title": "Reset script",
+          "x-ui": {
+            "group": "Seeds",
+            "label": "Reset script",
+            "order": 3,
+            "widget": "text"
+          }
+        },
+        "hash_command": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "One command line, run from a copy of the bundle folder so that paths such as seeds/hash.sh resolve, that exits 0 and prints the hash of the seeded state as the last line of its output (8 to 128 characters of letters, digits, colon, underscore or hyphen). It must only read. Secrets appear as ${NAME} placeholders.",
+          "examples": [
+            "bash seeds/hash.sh"
+          ],
+          "title": "Hash command",
+          "x-ui": {
+            "group": "Seeds",
+            "label": "Hash command",
+            "order": 4,
+            "widget": "text"
+          }
+        },
+        "expected_hash": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9:_-]{8,128}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Hash the seeded state must produce; absent means the first reset records it.",
+          "examples": [
+            "9f2c1d8e7b6a5d4c"
+          ],
+          "title": "Expected hash",
+          "x-ui": {
+            "group": "Seeds",
+            "label": "Expected hash",
+            "order": 5,
+            "widget": "text"
+          }
+        },
+        "dsn_env": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Z][A-Z0-9_]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Environment variable of the write-capable connection a .sql reset script runs on. It must differ from every truth source connection variable.",
+          "examples": [
+            "SEED_DB_DSN"
+          ],
+          "title": "Seed connection variable",
+          "x-ui": {
+            "group": "Seeds",
+            "label": "Seed connection variable",
+            "order": 6,
+            "widget": "text"
+          }
+        }
+      },
+      "title": "Seeds",
+      "type": "object"
+    },
+    "SourceSection": {
+      "additionalProperties": true,
+      "description": "The commit of the repository the bundle was produced from, so a failure can be tied to the code that was read.",
+      "properties": {
+        "commit": {
+          "description": "Commit the bundle describes, as 7 to 40 lowercase hex digits (git rev-parse HEAD).",
+          "examples": [
+            "3f9c2ab41d7e"
+          ],
+          "pattern": "^[0-9a-f]{7,40}$",
+          "title": "Commit",
+          "type": "string",
+          "x-ui": {
+            "group": "Identity",
+            "label": "Commit",
+            "order": 1,
+            "widget": "text"
+          }
+        },
+        "branch": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Branch that was checked out.",
+          "examples": [
+            "main"
+          ],
+          "title": "Branch",
+          "x-ui": {
+            "group": "Identity",
+            "label": "Branch",
+            "order": 2,
+            "widget": "text"
+          }
+        },
+        "dirty": {
+          "default": false,
+          "description": "True when the working tree had changes that were not committed.",
+          "examples": [
+            false
+          ],
+          "title": "Dirty",
+          "type": "boolean",
+          "x-ui": {
+            "group": "Identity",
+            "label": "Dirty",
+            "order": 3,
+            "widget": "toggle"
+          }
+        }
+      },
+      "required": [
+        "commit"
+      ],
+      "title": "Source",
+      "type": "object"
+    },
+    "TruthSource": {
+      "additionalProperties": true,
+      "description": "A database or read endpoint an expected result can be computed from.",
+      "properties": {
+        "id": {
+          "description": "Slug oracles use to refer to this source.",
+          "examples": [
+            "primary_db"
+          ],
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Id",
+          "type": "string",
+          "x-ui": {
+            "group": "Truth",
+            "label": "Id",
+            "order": 1,
+            "widget": "text"
+          }
+        },
+        "kind": {
+          "description": "Whether the source is a database or an HTTP read endpoint.",
+          "enum": [
+            "database",
+            "read_endpoint"
+          ],
+          "examples": [
+            "database"
+          ],
+          "title": "Kind",
+          "type": "string",
+          "x-ui": {
+            "group": "Truth",
+            "label": "Kind",
+            "order": 2,
+            "widget": "select"
+          }
+        },
+        "description": {
+          "default": "",
+          "description": "What the source holds.",
+          "examples": [
+            "Smart Log tables, read-only replica"
+          ],
+          "title": "Description",
+          "type": "string",
+          "x-ui": {
+            "group": "Truth",
+            "label": "Description",
+            "order": 3,
+            "widget": "textarea"
+          }
+        },
+        "connection_env": {
+          "description": "Environment variable that holds the READ-ONLY connection.",
+          "examples": [
+            "TRUTH_DB_DSN"
+          ],
+          "pattern": "^[A-Z][A-Z0-9_]*$",
+          "title": "Connection variable",
+          "type": "string",
+          "x-ui": {
+            "group": "Truth",
+            "label": "Connection variable",
+            "order": 4,
+            "widget": "text"
+          }
+        },
+        "dialect": {
+          "anyOf": [
+            {
+              "pattern": "^[a-z][a-z0-9_]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "SQL dialect of a database source, lower case, for example postgres; required for databases because oracle queries are parsed in that dialect.",
+          "examples": [
+            "postgres"
+          ],
+          "title": "Dialect",
+          "x-ui": {
+            "group": "Truth",
+            "label": "Dialect",
+            "order": 5,
+            "widget": "text"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "connection_env"
+      ],
+      "title": "Truth source",
+      "type": "object"
+    },
+    "OracleGoldPoint": {
+      "additionalProperties": true,
+      "description": "One named value Tessa derives from the oracle rows and interpolates into the expected result of a step as ${gold.<key>}.",
+      "properties": {
+        "key": {
+          "description": "Lower case name used in ${gold.<key>}.",
+          "examples": [
+            "open_count"
+          ],
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "title": "Key",
+          "type": "string",
+          "x-ui": {
+            "group": "Oracle",
+            "label": "Key",
+            "order": 1,
+            "widget": "text"
+          }
+        },
+        "expression": {
+          "description": "Jinja2 expression over rows (list of row objects keyed by column name) and params that computes the value.",
+          "examples": [
+            "rows | length"
+          ],
+          "minLength": 1,
+          "title": "Expression",
+          "type": "string",
+          "x-ui": {
+            "group": "Oracle",
+            "label": "Expression",
+            "order": 2,
+            "widget": "text"
+          }
+        },
+        "template": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Jinja2 template over value, rows and params that renders the value as text; when absent the value is rendered as is.",
+          "examples": [
+            "{{ value }} open maintenance issues"
+          ],
+          "title": "Template",
+          "x-ui": {
+            "group": "Oracle",
+            "label": "Template",
+            "order": 3,
+            "widget": "text"
+          }
+        }
+      },
+      "required": [
+        "key",
+        "expression"
+      ],
+      "title": "Oracle gold point",
+      "type": "object"
+    },
+    "OracleSidecar": {
+      "additionalProperties": true,
+      "description": "Format of oracle/<name>.yaml: describes the read-only reference query in oracle/<name>.sql or oracle/<name>.py that sits next to it, its parameters and the sentence Tessa expects the app to say from the rows.",
+      "properties": {
+        "name": {
+          "description": "Name of the oracle, equal to the file name without extension; features cite it in examples[].oracle.",
+          "examples": [
+            "open_maintenance"
+          ],
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
+          "title": "Name",
+          "type": "string",
+          "x-ui": {
+            "group": "Oracle",
+            "label": "Name",
+            "order": 1,
+            "widget": "text"
+          }
+        },
+        "feature_ids": {
+          "description": "Ids of the features whose expected result this oracle computes.",
+          "examples": [
+            [
+              "smart_log.read.open_maintenance"
+            ]
+          ],
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Feature ids",
+          "type": "array",
+          "x-ui": {
+            "group": "Oracle",
+            "label": "Feature ids",
+            "order": 2,
+            "widget": "chips"
+          }
+        },
+        "language": {
+          "description": "sql for oracle/<name>.sql (one SELECT, named parameters written :name); python for oracle/<name>.py defining run(params, connect) that returns a list of row objects.",
+          "enum": [
+            "sql",
+            "python"
+          ],
+          "examples": [
+            "sql"
+          ],
+          "title": "Language",
+          "type": "string",
+          "x-ui": {
+            "group": "Oracle",
+            "label": "Language",
+            "order": 3,
+            "widget": "select"
+          }
+        },
+        "params_schema": {
+          "additionalProperties": true,
+          "description": "JSON Schema of the parameters: type object with a properties map. A property may carry x-source to say what supplies it: clock (the run's date or time), tenant (the id of the seeded QA tenant), role (the role id the scenario runs as) or literal (a fixed value given in default).",
+          "examples": [
+            {
+              "properties": {
+                "tenant_id": {
+                  "type": "string",
+                  "x-source": "tenant"
+                },
+                "today": {
+                  "format": "date",
+                  "type": "string",
+                  "x-source": "clock"
+                }
+              },
+              "required": [
+                "tenant_id",
+                "today"
+              ],
+              "type": "object"
+            }
+          ],
+          "title": "Parameters schema",
+          "type": "object",
+          "x-ui": {
+            "group": "Oracle",
+            "label": "Parameters schema",
+            "order": 4,
+            "widget": "yaml"
+          }
+        },
+        "sentence_template": {
+          "description": "Jinja2 template over rows (list of row objects keyed by column name) and params that renders the sentence the app is expected to say.",
+          "examples": [
+            "{{ rows | length }} maintenance issues are open, most of them in room {{ rows[0].room }}."
+          ],
+          "minLength": 1,
+          "title": "Sentence template",
+          "type": "string",
+          "x-ui": {
+            "group": "Oracle",
+            "label": "Sentence template",
+            "order": 5,
+            "widget": "textarea"
+          }
+        },
+        "truth_source": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Id of the truth source the query runs on; optional when the manifest declares exactly one.",
+          "examples": [
+            "primary_db"
+          ],
+          "title": "Truth source",
+          "x-ui": {
+            "group": "Oracle",
+            "label": "Truth source",
+            "order": 6,
+            "widget": "text"
+          }
+        },
+        "gold_points": {
+          "description": "Named values derived from the rows that scenarios may interpolate as ${gold.<key>}.",
+          "examples": [
+            [
+              {
+                "expression": "rows | length",
+                "key": "open_count"
+              }
+            ]
+          ],
+          "items": {
+            "$ref": "#/$defs/OracleGoldPoint"
+          },
+          "title": "Gold points",
+          "type": "array",
+          "x-ui": {
+            "group": "Oracle",
+            "label": "Gold points",
+            "order": 7,
+            "widget": "yaml"
+          }
+        }
+      },
+      "required": [
+        "name",
+        "feature_ids",
+        "language",
+        "params_schema",
+        "sentence_template"
+      ],
+      "title": "Oracle sidecar",
+      "type": "object"
+    },
+    "FlowStep": {
+      "additionalProperties": true,
+      "description": "One action of a UI flow and the state expected after it.",
+      "properties": {
+        "action": {
+          "description": "What the step does: goto opens url; click, check and hover act on target; fill and select act on target with value; press sends the key in value; wait_for only waits for expect to hold.",
+          "enum": [
+            "goto",
+            "click",
+            "fill",
+            "press",
+            "select",
+            "check",
+            "hover",
+            "wait_for"
+          ],
+          "examples": [
+            "click"
+          ],
+          "title": "Action",
+          "type": "string",
+          "x-ui": {
+            "group": "Flow",
+            "label": "Action",
+            "order": 1,
+            "widget": "select"
+          }
+        },
+        "url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Path or URL to open, for goto.",
+          "examples": [
+            "/rooms"
+          ],
+          "title": "URL",
+          "x-ui": {
+            "group": "Flow",
+            "label": "URL",
+            "order": 2,
+            "widget": "text"
+          }
+        },
+        "target": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FlowTarget"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The element to act on.",
+          "examples": [
+            {
+              "name": "Save",
+              "role": "button"
+            }
+          ],
+          "title": "Target",
+          "x-ui": {
+            "group": "Flow",
+            "label": "Target",
+            "order": 3,
+            "widget": "yaml"
+          }
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Text to type, option to pick or key to press. Secrets appear as ${NAME} placeholders.",
+          "examples": [
+            "${ADMIN_EMAIL}"
+          ],
+          "title": "Value",
+          "x-ui": {
+            "group": "Flow",
+            "label": "Value",
+            "order": 4,
+            "widget": "text"
+          }
+        },
+        "expect": {
+          "additionalProperties": true,
+          "description": "State expected after the step, for example the url, visible text or elements; an empty object when nothing is asserted.",
+          "examples": [
+            {
+              "text": [
+                "Rooms"
+              ],
+              "url": "/rooms"
+            }
+          ],
+          "title": "Expect",
+          "type": "object",
+          "x-ui": {
+            "group": "Flow",
+            "label": "Expect",
+            "order": 5,
+            "widget": "yaml"
+          }
+        }
+      },
+      "required": [
+        "action"
+      ],
+      "title": "Flow step",
+      "type": "object"
+    },
+    "FlowTarget": {
+      "additionalProperties": true,
+      "description": "The element a step acts on: an accessibility role with its name, or a stable selector.",
+      "properties": {
+        "role": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Accessibility role of the element, for example button, link, textbox or heading.",
+          "examples": [
+            "button"
+          ],
+          "title": "Role",
+          "x-ui": {
+            "group": "Flow",
+            "label": "Role",
+            "order": 1,
+            "widget": "text"
+          }
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Accessible name of the element, as a screen reader announces it.",
+          "examples": [
+            "Save"
+          ],
+          "title": "Name",
+          "x-ui": {
+            "group": "Flow",
+            "label": "Name",
+            "order": 2,
+            "widget": "text"
+          }
+        },
+        "selector": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Stable selector such as [data-testid=save], used when role and name are not enough.",
+          "examples": [
+            "[data-testid=save]"
+          ],
+          "title": "Selector",
+          "x-ui": {
+            "group": "Flow",
+            "label": "Selector",
+            "order": 3,
+            "widget": "text"
+          }
+        }
+      },
+      "title": "Flow target",
+      "type": "object"
+    },
+    "Flow": {
+      "additionalProperties": true,
+      "description": "Format of flows/<id>.yaml: one key UI path as ordered steps, tied to the features it exercises.",
+      "properties": {
+        "id": {
+          "description": "Slug of the flow, equal to the file name without extension.",
+          "examples": [
+            "create_maintenance_issue"
+          ],
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Id",
+          "type": "string",
+          "x-ui": {
+            "group": "Flow",
+            "label": "Id",
+            "order": 1,
+            "widget": "text"
+          }
+        },
+        "title": {
+          "description": "What the path achieves, in a few words.",
+          "examples": [
+            "Create a maintenance issue from the Smart Log"
+          ],
+          "minLength": 1,
+          "title": "Title",
+          "type": "string",
+          "x-ui": {
+            "group": "Flow",
+            "label": "Title",
+            "order": 2,
+            "widget": "text"
+          }
+        },
+        "feature_ids": {
+          "description": "Ids of the features this flow exercises.",
+          "examples": [
+            [
+              "smart_log.write.create_issue"
+            ]
+          ],
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Feature ids",
+          "type": "array",
+          "x-ui": {
+            "group": "Flow",
+            "label": "Feature ids",
+            "order": 3,
+            "widget": "chips"
+          }
+        },
+        "role": {
+          "description": "Id of the role the flow runs as, or anonymous before any login.",
+          "examples": [
+            "admin"
+          ],
+          "title": "Role",
+          "type": "string",
+          "x-ui": {
+            "group": "Flow",
+            "label": "Role",
+            "order": 4,
+            "widget": "text"
+          }
+        },
+        "steps": {
+          "description": "Ordered steps; the first usually opens a page with goto.",
+          "examples": [
+            [
+              {
+                "action": "goto",
+                "url": "/smart-log"
+              }
+            ]
+          ],
+          "items": {
+            "$ref": "#/$defs/FlowStep"
+          },
+          "minItems": 1,
+          "title": "Steps",
+          "type": "array",
+          "x-ui": {
+            "group": "Flow",
+            "label": "Steps",
+            "order": 5,
+            "widget": "yaml"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "feature_ids",
+        "role",
+        "steps"
+      ],
+      "title": "Flow",
+      "type": "object"
+    },
+    "DeployedMarker": {
+      "additionalProperties": false,
+      "description": "A QA-only route that proves which mutant is deployed: a mutation run reads it before it starts and marks every outcome errored, never survived, when the text is missing.",
+      "properties": {
+        "path": {
+          "description": "Path on the mutant's base URL, with a single leading slash.",
+          "examples": [
+            "/__qa/mutant"
+          ],
+          "maxLength": 200,
+          "minLength": 1,
+          "pattern": "^/([^/\\s\\\\][^\\s\\\\]*)?$",
+          "title": "Path",
+          "type": "string",
+          "x-ui": {
+            "group": "Deployed marker",
+            "label": "Path",
+            "order": 1,
+            "widget": "text"
+          }
+        },
+        "expected_text": {
+          "description": "Text the response body must contain when this mutant is the deployed build.",
+          "examples": [
+            "skip-tenant-filter-on-issue-list"
+          ],
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Expected text",
+          "type": "string",
+          "x-ui": {
+            "group": "Deployed marker",
+            "label": "Expected text",
+            "order": 2,
+            "widget": "text"
+          }
+        }
+      },
+      "required": [
+        "path",
+        "expected_text"
+      ],
+      "title": "Deployed marker",
+      "type": "object"
+    },
+    "MutantFields": {
+      "additionalProperties": false,
+      "description": "One known bug: a branch of the app with a single deliberate defect, and the invariants that should catch it.",
+      "properties": {
+        "name": {
+          "description": "A short slug that names the bug; unique per target.",
+          "examples": [
+            "skip-tenant-filter-on-issue-list"
+          ],
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string",
+          "x-ui": {
+            "group": "The bug",
+            "label": "Name",
+            "order": 10,
+            "widget": "text"
+          }
+        },
+        "branch": {
+          "description": "The git branch that carries the defect.",
+          "examples": [
+            "tessa/mutant/skip-tenant-filter-on-issue-list"
+          ],
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Branch",
+          "type": "string",
+          "x-ui": {
+            "group": "The bug",
+            "label": "Branch",
+            "order": 20,
+            "widget": "text"
+          }
+        },
+        "description": {
+          "description": "What the branch breaks, in a sentence or two.",
+          "examples": [
+            "The issue list query no longer filters by tenant."
+          ],
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Description",
+          "type": "string",
+          "x-ui": {
+            "group": "The bug",
+            "label": "What it breaks",
+            "order": 30,
+            "widget": "textarea"
+          }
+        },
+        "expected_catchers": {
+          "description": "The invariants that should fail when this bug is present. A mutant that none of them catches survives.",
+          "examples": [
+            [
+              "tenant_isolation",
+              "count_consistency"
+            ]
+          ],
+          "items": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 20,
+          "minItems": 1,
+          "title": "Expected catchers",
+          "type": "array",
+          "uniqueItems": true,
+          "x-ui": {
+            "group": "What should catch it",
+            "label": "Invariants that should catch it",
+            "order": 40,
+            "widget": "invariants"
+          }
+        },
+        "base_url": {
+          "anyOf": [
+            {
+              "maxLength": 500,
+              "minLength": 1,
+              "pattern": "^https?://\\S+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Where the branch is deployed on QA. Required before the mutant can be marked deployed; a mutation run can also override it.",
+          "examples": [
+            "https://gracie-mutant-1.qa.example.test"
+          ],
+          "title": "Base URL",
+          "x-ui": {
+            "group": "Where it runs",
+            "label": "Deployed at",
+            "order": 50,
+            "widget": "text"
+          }
+        },
+        "deployed_marker": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DeployedMarker"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional QA-only route that shows which build is deployed.",
+          "title": "Deployed marker",
+          "x-ui": {
+            "group": "Where it runs",
+            "label": "Deployed marker",
+            "order": 60,
+            "widget": "json"
+          }
+        }
+      },
+      "required": [
+        "name",
+        "branch",
+        "description",
+        "expected_catchers"
+      ],
+      "title": "Mutant",
+      "type": "object"
+    },
+    "EnvTemplate": {
+      "title": "env.template",
+      "description": "Format of env.template: plain text, one variable per line as NAME=value, where NAME matches [A-Z][A-Z0-9_]* and value is empty or a single token without whitespace (use <describe-it> for a secret, or a harmless example for a non-secret). The purpose of a variable goes in a comment line starting with # directly above it, or in a trailing comment after whitespace and #. Blank lines are allowed. Every environment entry of the manifest has exactly one line, and no other names appear. Never put a real value in this file.",
+      "type": "string",
+      "examples": [
+        "# Base URL of the QA deployment\nGRACIE_BASE_URL=http://localhost:8080\n\nADMIN_TOKEN=<admin-api-token>  # API token of the admin role\n"
+      ],
+      "x-line-pattern": "^([A-Z][A-Z0-9_]*)=(\\S*)(\\s+#\\s*(.*))?$"
+    },
+    "MutantsSidecar": {
+      "title": "mutants.yaml",
+      "description": "Format of the optional file mutants.yaml: one YAML list, one entry per known bug, each validated against MutantFields. Upload imports every entry as a mutant with status registered; an entry is identified by its name, so uploading the same name again updates it instead of adding a second one.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/MutantFields"
+      },
+      "maxItems": 100
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "description": "URL of this schema; Tessa fills it into the Discovery prompt.",
+      "examples": [
+        "http://localhost:8000/schemas/bundle.v1.json"
+      ],
+      "pattern": "^https?://[^\\s/]+(/\\S*)?/schemas/bundle\\.v1\\.json$",
+      "title": "Schema",
+      "type": "string",
+      "x-ui": {
+        "group": "Identity",
+        "label": "Schema",
+        "order": 1,
+        "widget": "text"
+      }
+    },
+    "target_token": {
+      "description": "Routing token that matches an upload to its target.",
+      "examples": [
+        "tgt_abcdefghijklmnopqrstuv"
+      ],
+      "pattern": "^tgt_[a-z2-7]{22}$",
+      "title": "Target token",
+      "type": "string",
+      "x-ui": {
+        "group": "Identity",
+        "label": "Target token",
+        "order": 2,
+        "widget": "text"
+      }
+    },
+    "app": {
+      "$ref": "#/$defs/AppSection",
+      "description": "What the app is and how to run it.",
+      "examples": [
+        {
+          "how_to_run": "npm run dev",
+          "kind": "llm_assistant",
+          "name": "Gracie",
+          "summary": "Hotel assistant"
+        }
+      ],
+      "x-ui": {
+        "group": "App",
+        "label": "App",
+        "order": 3,
+        "widget": "yaml"
+      },
+      "title": "App"
+    },
+    "interfaces": {
+      "description": "Every way a client reaches the app.",
+      "examples": [
+        [
+          {
+            "base_path": "/api/chat",
+            "id": "chat_sse",
+            "kind": "sse"
+          }
+        ]
+      ],
+      "items": {
+        "$ref": "#/$defs/Interface"
+      },
+      "minItems": 1,
+      "title": "Interfaces",
+      "type": "array",
+      "x-ui": {
+        "group": "Interfaces",
+        "label": "Interfaces",
+        "order": 4,
+        "widget": "yaml"
+      }
+    },
+    "roles": {
+      "description": "Every kind of user and what each may see and do; an app without login declares one role such as anonymous.",
+      "examples": [
+        [
+          {
+            "description": "Property manager",
+            "id": "admin",
+            "level": 2
+          }
+        ]
+      ],
+      "items": {
+        "$ref": "#/$defs/Role"
+      },
+      "minItems": 1,
+      "title": "Roles",
+      "type": "array",
+      "x-ui": {
+        "group": "Roles",
+        "label": "Roles",
+        "order": 5,
+        "widget": "yaml"
+      }
+    },
+    "features": {
+      "description": "The catalog of testable things.",
+      "examples": [
+        [
+          {
+            "area": "Smart Log",
+            "description": "List open maintenance issues",
+            "id": "smart_log.read.open_maintenance",
+            "kind": "read"
+          }
+        ]
+      ],
+      "items": {
+        "$ref": "#/$defs/Feature"
+      },
+      "minItems": 1,
+      "title": "Features",
+      "type": "array",
+      "x-ui": {
+        "group": "Features",
+        "label": "Features",
+        "order": 6,
+        "widget": "yaml"
+      }
+    },
+    "data_model": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/DataModel"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Stores, tables and how rows are scoped.",
+      "examples": [
+        {
+          "stores": [
+            {
+              "kind": "postgres",
+              "name": "primary"
+            }
+          ]
+        }
+      ],
+      "title": "Data model",
+      "x-ui": {
+        "group": "Data",
+        "label": "Data model",
+        "order": 7,
+        "widget": "yaml"
+      }
+    },
+    "truth_sources": {
+      "description": "Databases and read endpoints an expected result can be computed from.",
+      "examples": [
+        [
+          {
+            "connection_env": "TRUTH_DB_DSN",
+            "id": "primary_db",
+            "kind": "database"
+          }
+        ]
+      ],
+      "items": {
+        "$ref": "#/$defs/TruthSource"
+      },
+      "title": "Truth sources",
+      "type": "array",
+      "x-ui": {
+        "group": "Truth",
+        "label": "Truth sources",
+        "order": 8,
+        "widget": "yaml"
+      }
+    },
+    "seeds": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Seeds"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "How a QA tenant is made identical on every run.",
+      "examples": [
+        {
+          "hash_command": "psql -At -f seeds/hash.sql",
+          "reset_script": "seeds/reset.sql"
+        }
+      ],
+      "title": "Seeds",
+      "x-ui": {
+        "group": "Seeds",
+        "label": "Seeds",
+        "order": 9,
+        "widget": "yaml"
+      }
+    },
+    "invariants": {
+      "description": "Rules that must always hold and how each is checked.",
+      "examples": [
+        [
+          {
+            "check": "code",
+            "id": "no_internal_ids",
+            "rule": "No internal ids in responses"
+          }
+        ]
+      ],
+      "items": {
+        "$ref": "#/$defs/Invariant"
+      },
+      "title": "Invariants",
+      "type": "array",
+      "x-ui": {
+        "group": "Invariants",
+        "label": "Invariants",
+        "order": 10,
+        "widget": "yaml"
+      }
+    },
+    "flags": {
+      "description": "Feature flags that change behaviour.",
+      "examples": [
+        [
+          {
+            "env_var": "FEATURE_NEW_CHECKOUT",
+            "id": "new_checkout"
+          }
+        ]
+      ],
+      "items": {
+        "$ref": "#/$defs/Flag"
+      },
+      "title": "Flags",
+      "type": "array",
+      "x-ui": {
+        "group": "Flags",
+        "label": "Flags",
+        "order": 11,
+        "widget": "yaml"
+      }
+    },
+    "environment": {
+      "description": "Every variable Tessa needs, with placeholders instead of values.",
+      "examples": [
+        [
+          {
+            "kind": "url",
+            "name": "GRACIE_BASE_URL",
+            "secret": false
+          }
+        ]
+      ],
+      "items": {
+        "$ref": "#/$defs/EnvironmentVariable"
+      },
+      "minItems": 1,
+      "title": "Environment",
+      "type": "array",
+      "x-ui": {
+        "group": "Environment",
+        "label": "Environment",
+        "order": 12,
+        "widget": "yaml"
+      }
+    },
+    "test_hooks": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/QaHooks"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Which QA hooks exist and which are missing.",
+      "examples": [
+        {
+          "missing": [
+            {
+              "description": "Pin the server clock",
+              "id": "pin_clock"
+            }
+          ]
+        }
+      ],
+      "title": "Test hooks",
+      "x-ui": {
+        "group": "Hooks",
+        "label": "Test hooks",
+        "order": 13,
+        "widget": "yaml"
+      }
+    },
+    "limitations": {
+      "description": "What cannot be tested or undone.",
+      "examples": [
+        [
+          "no sandbox for payments"
+        ]
+      ],
+      "items": {
+        "type": "string"
+      },
+      "title": "Limitations",
+      "type": "array",
+      "x-ui": {
+        "group": "Notes",
+        "label": "Limitations",
+        "order": 14,
+        "widget": "chips"
+      }
+    },
+    "cleanup": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/CleanupSection"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "What a run leaves behind and what it costs.",
+      "examples": [
+        {
+          "delete_after_run": [
+            "issues created by the suite"
+          ]
+        }
+      ],
+      "title": "Cleanup",
+      "x-ui": {
+        "group": "Notes",
+        "label": "Cleanup",
+        "order": 15,
+        "widget": "yaml"
+      }
+    },
+    "consumes": {
+      "description": "Calls this app sends to other apps, with the request shape sent and the response fields read; the input of the contract check.",
+      "examples": [
+        [
+          {
+            "id": "calendar_event_push",
+            "method": "POST",
+            "path": "/calendar/events",
+            "reads": [
+              "data.id",
+              "data.status"
+            ],
+            "request": {
+              "required": [
+                "title",
+                "starts_at"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      ],
+      "items": {
+        "$ref": "#/$defs/ConsumedCall"
+      },
+      "title": "Consumes",
+      "type": "array",
+      "x-ui": {
+        "group": "Consumes",
+        "label": "Consumes",
+        "order": 16,
+        "widget": "yaml"
+      }
+    },
+    "source": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/SourceSection"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Commit and branch of the repository the bundle was produced from.",
+      "examples": [
+        {
+          "branch": "main",
+          "commit": "3f9c2ab41d7e",
+          "dirty": false
+        }
+      ],
+      "title": "Source",
+      "x-ui": {
+        "group": "Identity",
+        "label": "Source",
+        "order": 17,
+        "widget": "yaml"
+      }
+    }
+  },
+  "required": [
+    "schema",
+    "target_token",
+    "app",
+    "interfaces",
+    "roles",
+    "features",
+    "environment"
+  ],
+  "type": "object"
+}

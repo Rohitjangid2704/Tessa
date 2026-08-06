@@ -1,0 +1,177 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "persona.v1.json",
+  "title": "Persona",
+  "description": "A simulated user: who they are and how they talk.",
+  "$defs": {
+    "PersonaTone": {
+      "enum": [
+        "formal",
+        "casual",
+        "terse",
+        "friendly",
+        "impatient"
+      ],
+      "title": "PersonaTone",
+      "type": "string"
+    },
+    "PersonaTraits": {
+      "additionalProperties": false,
+      "description": "Closed set of traits the simulated user follows.",
+      "properties": {
+        "patience": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TraitLevel"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "How long the persona tolerates slow or unhelpful answers.",
+          "title": "Patience",
+          "x-ui": {
+            "group": "How they behave",
+            "label": "Patience",
+            "order": 1,
+            "widget": "select"
+          }
+        },
+        "verbosity": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TraitLevel"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "How much the persona writes in each turn.",
+          "title": "Verbosity",
+          "x-ui": {
+            "group": "How they behave",
+            "label": "Verbosity",
+            "order": 2,
+            "widget": "select"
+          }
+        },
+        "tech_savviness": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TraitLevel"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "How comfortable the persona is with apps and chat assistants.",
+          "title": "Tech savviness",
+          "x-ui": {
+            "group": "How they behave",
+            "label": "Tech savviness",
+            "order": 3,
+            "widget": "select"
+          }
+        },
+        "assertiveness": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TraitLevel"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "How hard the persona pushes back and repeats a request.",
+          "title": "Assertiveness",
+          "x-ui": {
+            "group": "How they behave",
+            "label": "Assertiveness",
+            "order": 4,
+            "widget": "select"
+          }
+        },
+        "tone": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PersonaTone"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The register the persona writes in.",
+          "title": "Tone",
+          "x-ui": {
+            "group": "How they behave",
+            "label": "Tone",
+            "order": 5,
+            "widget": "select"
+          }
+        }
+      },
+      "title": "Persona traits",
+      "type": "object"
+    },
+    "TraitLevel": {
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "title": "TraitLevel",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "description": "Short name that tells personas apart in lists; unique per target.",
+      "examples": [
+        "Impatient front desk guest"
+      ],
+      "maxLength": 120,
+      "minLength": 1,
+      "title": "Name",
+      "type": "string",
+      "x-ui": {
+        "group": "Who",
+        "label": "Name",
+        "order": 1,
+        "widget": "text"
+      }
+    },
+    "description": {
+      "description": "Background the simulator plays: who they are and what they want.",
+      "examples": [
+        "A guest in a hurry who writes short messages and expects instant answers."
+      ],
+      "maxLength": 1000,
+      "minLength": 1,
+      "title": "Description",
+      "type": "string",
+      "x-ui": {
+        "group": "Who",
+        "label": "Description",
+        "order": 2,
+        "widget": "textarea"
+      }
+    },
+    "traits": {
+      "$ref": "#/$defs/PersonaTraits",
+      "description": "Closed set of traits; unset traits leave the simulator free to choose.",
+      "title": "Traits"
+    }
+  },
+  "required": [
+    "name",
+    "description",
+    "traits"
+  ],
+  "type": "object"
+}

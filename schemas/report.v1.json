@@ -1,0 +1,1379 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "report.v1.json",
+  "title": "RunReport",
+  "description": "JSON report of one run: the run, its stats, findings, the diff against the previous run and the frozen configuration.",
+  "$defs": {
+    "BudgetState": {
+      "properties": {
+        "max_usd": {
+          "description": "spend ceiling in USD",
+          "minimum": 0,
+          "title": "Max Usd",
+          "type": "number"
+        },
+        "spent_usd": {
+          "description": "spent so far in USD",
+          "minimum": 0,
+          "title": "Spent Usd",
+          "type": "number"
+        },
+        "max_minutes": {
+          "description": "wall clock ceiling in minutes",
+          "minimum": 1,
+          "title": "Max Minutes",
+          "type": "integer"
+        },
+        "elapsed_ms": {
+          "description": "wall clock used so far in milliseconds",
+          "minimum": 0,
+          "title": "Elapsed Ms",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "max_usd",
+        "spent_usd",
+        "max_minutes",
+        "elapsed_ms"
+      ],
+      "title": "BudgetState",
+      "type": "object"
+    },
+    "ClockSnapshot": {
+      "properties": {
+        "mode": {
+          "description": "pinned through a target hook or real",
+          "enum": [
+            "pinned",
+            "real"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "at": {
+          "description": "the moment every today parameter of the run resolves to",
+          "format": "date-time",
+          "title": "At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "mode",
+        "at"
+      ],
+      "title": "ClockSnapshot",
+      "type": "object"
+    },
+    "CostPercentiles": {
+      "properties": {
+        "total": {
+          "description": "money spent by the run in USD",
+          "minimum": 0,
+          "title": "Total",
+          "type": "number"
+        },
+        "p50": {
+          "description": "median cost of a run scenario in USD",
+          "minimum": 0,
+          "title": "P50",
+          "type": "number"
+        },
+        "p90": {
+          "minimum": 0,
+          "title": "P90",
+          "type": "number"
+        }
+      },
+      "required": [
+        "total",
+        "p50",
+        "p90"
+      ],
+      "title": "CostPercentiles",
+      "type": "object"
+    },
+    "Effort": {
+      "enum": [
+        "minimal",
+        "low",
+        "medium",
+        "high"
+      ],
+      "title": "Effort",
+      "type": "string"
+    },
+    "FamilyStats": {
+      "properties": {
+        "family": {
+          "title": "Family",
+          "type": "string"
+        },
+        "scenarios": {
+          "description": "finished and skipped run scenarios of the family",
+          "minimum": 0,
+          "title": "Scenarios",
+          "type": "integer"
+        },
+        "pass_hat_k": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "fraction of the family's finished scenarios whose k attempts all passed",
+          "title": "Pass Hat K"
+        },
+        "flaky": {
+          "minimum": 0,
+          "title": "Flaky",
+          "type": "integer"
+        },
+        "uncertain": {
+          "minimum": 0,
+          "title": "Uncertain",
+          "type": "integer"
+        },
+        "skipped": {
+          "minimum": 0,
+          "title": "Skipped",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "family",
+        "scenarios",
+        "pass_hat_k",
+        "flaky",
+        "uncertain",
+        "skipped"
+      ],
+      "title": "FamilyStats",
+      "type": "object"
+    },
+    "FindingClass": {
+      "enum": [
+        "wrong_result",
+        "invariant_violation",
+        "server_error",
+        "security_boundary",
+        "safety_claim",
+        "performance",
+        "accessibility",
+        "flaky",
+        "contract",
+        "harness"
+      ],
+      "title": "FindingClass",
+      "type": "string"
+    },
+    "FindingStatus": {
+      "enum": [
+        "new",
+        "triaged",
+        "in_fix",
+        "verifying",
+        "resolved",
+        "known_gap",
+        "dismissed"
+      ],
+      "title": "FindingStatus",
+      "type": "string"
+    },
+    "FindingSummary": {
+      "properties": {
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "target_id": {
+          "format": "uuid",
+          "title": "Target Id",
+          "type": "string"
+        },
+        "fingerprint": {
+          "description": "stable hash that identifies the underlying problem",
+          "title": "Fingerprint",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "class": {
+          "$ref": "#/$defs/FindingClass",
+          "title": "class"
+        },
+        "severity": {
+          "$ref": "#/$defs/Severity",
+          "title": "severity"
+        },
+        "status": {
+          "$ref": "#/$defs/FindingStatus",
+          "title": "status"
+        },
+        "invariant_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Invariant Id"
+        },
+        "scenario_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Scenario Id"
+        },
+        "first_seen_at": {
+          "format": "date-time",
+          "title": "First Seen At",
+          "type": "string"
+        },
+        "last_seen_at": {
+          "format": "date-time",
+          "title": "Last Seen At",
+          "type": "string"
+        },
+        "occurrence_count": {
+          "minimum": 1,
+          "title": "Occurrence Count",
+          "type": "integer"
+        },
+        "ticket_url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Ticket Url"
+        },
+        "known_gap_reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Known Gap Reason"
+        },
+        "promoted_scenario_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Promoted Scenario Id"
+        }
+      },
+      "required": [
+        "id",
+        "target_id",
+        "fingerprint",
+        "title",
+        "class",
+        "severity",
+        "status",
+        "invariant_id",
+        "scenario_id",
+        "first_seen_at",
+        "last_seen_at",
+        "occurrence_count",
+        "ticket_url",
+        "known_gap_reason",
+        "promoted_scenario_id"
+      ],
+      "title": "FindingSummary",
+      "type": "object"
+    },
+    "InvariantPack": {
+      "enum": [
+        "generic",
+        "llm_app",
+        "target"
+      ],
+      "title": "InvariantPack",
+      "type": "string"
+    },
+    "InvariantStats": {
+      "properties": {
+        "invariant_id": {
+          "title": "Invariant Id",
+          "type": "string"
+        },
+        "pack": {
+          "$ref": "#/$defs/InvariantPack",
+          "title": "pack"
+        },
+        "pass": {
+          "minimum": 0,
+          "title": "Pass",
+          "type": "integer"
+        },
+        "fail": {
+          "minimum": 0,
+          "title": "Fail",
+          "type": "integer"
+        },
+        "flaky": {
+          "minimum": 0,
+          "title": "Flaky",
+          "type": "integer"
+        },
+        "uncertain": {
+          "minimum": 0,
+          "title": "Uncertain",
+          "type": "integer"
+        },
+        "skipped": {
+          "minimum": 0,
+          "title": "Skipped",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "invariant_id",
+        "pack",
+        "pass",
+        "fail",
+        "flaky",
+        "uncertain",
+        "skipped"
+      ],
+      "title": "InvariantStats",
+      "type": "object"
+    },
+    "LatencyPercentiles": {
+      "properties": {
+        "p50": {
+          "description": "median step latency in milliseconds",
+          "minimum": 0,
+          "title": "P50",
+          "type": "integer"
+        },
+        "p90": {
+          "minimum": 0,
+          "title": "P90",
+          "type": "integer"
+        },
+        "p99": {
+          "minimum": 0,
+          "title": "P99",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "p50",
+        "p90",
+        "p99"
+      ],
+      "title": "LatencyPercentiles",
+      "type": "object"
+    },
+    "ModelRole": {
+      "enum": [
+        "judge",
+        "judge_tiebreak"
+      ],
+      "title": "ModelRole",
+      "type": "string"
+    },
+    "ModelSnapshot": {
+      "properties": {
+        "model": {
+          "description": "model name used for the role",
+          "title": "Model",
+          "type": "string"
+        },
+        "effort": {
+          "$ref": "#/$defs/Effort",
+          "description": "reasoning effort used for the role",
+          "title": "effort"
+        }
+      },
+      "required": [
+        "model",
+        "effort"
+      ],
+      "title": "ModelSnapshot",
+      "type": "object"
+    },
+    "PromptTemplateName": {
+      "enum": [
+        "discovery",
+        "fixup",
+        "explain",
+        "author",
+        "hooks",
+        "mutants",
+        "propose"
+      ],
+      "title": "PromptTemplateName",
+      "type": "string"
+    },
+    "Run": {
+      "properties": {
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/RunKind",
+          "title": "kind"
+        },
+        "target_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Target Id"
+        },
+        "plan_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Plan Id"
+        },
+        "status": {
+          "$ref": "#/$defs/RunStatus",
+          "title": "status"
+        },
+        "counters": {
+          "$ref": "#/$defs/RunCounters",
+          "title": "counters"
+        },
+        "budget": {
+          "$ref": "#/$defs/BudgetState",
+          "title": "budget"
+        },
+        "read_only": {
+          "title": "Read Only",
+          "type": "boolean"
+        },
+        "started_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Started At"
+        },
+        "finished_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Finished At"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "trigger": {
+          "$ref": "#/$defs/RunTrigger",
+          "title": "trigger"
+        },
+        "bundle_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "bundle the run runs against; for a finished import run the bundle it created, null until then",
+          "title": "Bundle Id"
+        },
+        "config_snapshot": {
+          "$ref": "#/$defs/RunConfigSnapshot",
+          "title": "config_snapshot"
+        },
+        "event_head_seq": {
+          "description": "highest persisted event seq of the run",
+          "minimum": 0,
+          "title": "Event Head Seq",
+          "type": "integer"
+        },
+        "workflow_id": {
+          "title": "Workflow Id",
+          "type": "string"
+        },
+        "temporal_ui_url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "link to the workflow in the Temporal UI",
+          "title": "Temporal Ui Url"
+        },
+        "stop_requested_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "when POST /runs/{run_id}/stop was requested; null until then",
+          "title": "Stop Requested At"
+        },
+        "created_by": {
+          "format": "uuid",
+          "title": "Created By",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "target_id",
+        "plan_id",
+        "status",
+        "counters",
+        "budget",
+        "read_only",
+        "started_at",
+        "finished_at",
+        "created_at",
+        "trigger",
+        "bundle_id",
+        "config_snapshot",
+        "event_head_seq",
+        "workflow_id",
+        "temporal_ui_url",
+        "stop_requested_at",
+        "created_by"
+      ],
+      "title": "Run",
+      "type": "object"
+    },
+    "RunConfigSnapshot": {
+      "properties": {
+        "bundle_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "bundle the run runs against; null only for an import run, which has no bundle until it has created one",
+          "title": "Bundle Id"
+        },
+        "bundle_version": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "version of that bundle; null with it",
+          "title": "Bundle Version"
+        },
+        "bundle_hash": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "content hash of that bundle; null with it",
+          "title": "Bundle Hash"
+        },
+        "seed_hash": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "null until Stage 3",
+          "title": "Seed Hash"
+        },
+        "clock": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ClockSnapshot"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "null until Stage 3",
+          "title": "clock"
+        },
+        "models": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "$ref": "#/$defs/ModelSnapshot"
+              },
+              "propertyNames": {
+                "$ref": "#/$defs/ModelRole"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "null until Stage 4",
+          "title": "Models"
+        },
+        "probe_bank_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "null until Stage 4",
+          "title": "Probe Bank Version"
+        },
+        "prompt_template_versions": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "description": "prompt template versions the run depends on",
+          "propertyNames": {
+            "$ref": "#/$defs/PromptTemplateName"
+          },
+          "title": "Prompt Template Versions",
+          "type": "object"
+        },
+        "scenario_versions": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "description": "version of every scenario of the run, pinned at the end of planning",
+          "propertyNames": {
+            "format": "uuid"
+          },
+          "title": "Scenario Versions",
+          "type": "object"
+        },
+        "base_url_override": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "address of the mutant that replaced the origin of the target URL variables; null outside mutation runs",
+          "title": "Base Url Override"
+        },
+        "schedule_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "schedule that started the run, through its cron or run-now; null for runs nobody scheduled",
+          "title": "Schedule Id"
+        },
+        "schedule_tier": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ScheduleTier"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "tier of that schedule; commit runs the smoke scenarios only, grades with code and Laya and stops after TESSA_COMMIT_TIER_MAX_MINUTES",
+          "title": "schedule_tier"
+        },
+        "scenario_ids": {
+          "anyOf": [
+            {
+              "items": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "scenarios a subset run was asked to run and nothing else; null for a run of a plan. A subset run skips the synthetic invariant scenarios and the API fuzz family",
+          "title": "Scenario Ids"
+        },
+        "bundle_commit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "commit the bundle was produced from, when its manifest names one",
+          "title": "Bundle Commit"
+        }
+      },
+      "required": [
+        "bundle_id",
+        "bundle_version",
+        "bundle_hash",
+        "seed_hash",
+        "clock",
+        "models",
+        "probe_bank_version",
+        "prompt_template_versions",
+        "scenario_versions"
+      ],
+      "title": "RunConfigSnapshot",
+      "type": "object"
+    },
+    "RunCounters": {
+      "properties": {
+        "scenarios_total": {
+          "minimum": 0,
+          "title": "Scenarios Total",
+          "type": "integer"
+        },
+        "scenarios_done": {
+          "minimum": 0,
+          "title": "Scenarios Done",
+          "type": "integer"
+        },
+        "pass": {
+          "minimum": 0,
+          "title": "Pass",
+          "type": "integer"
+        },
+        "fail": {
+          "minimum": 0,
+          "title": "Fail",
+          "type": "integer"
+        },
+        "flaky": {
+          "minimum": 0,
+          "title": "Flaky",
+          "type": "integer"
+        },
+        "uncertain": {
+          "minimum": 0,
+          "title": "Uncertain",
+          "type": "integer"
+        },
+        "skipped": {
+          "minimum": 0,
+          "title": "Skipped",
+          "type": "integer"
+        },
+        "steps_recorded": {
+          "minimum": 0,
+          "title": "Steps Recorded",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "scenarios_total",
+        "scenarios_done",
+        "pass",
+        "fail",
+        "flaky",
+        "uncertain",
+        "skipped",
+        "steps_recorded"
+      ],
+      "title": "RunCounters",
+      "type": "object"
+    },
+    "RunDiff": {
+      "properties": {
+        "new_failures": {
+          "description": "scenario ids of comparable new failures",
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": "New Failures",
+          "type": "array"
+        },
+        "fixed": {
+          "description": "scenario ids of comparable fixes",
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": "Fixed",
+          "type": "array"
+        },
+        "still_failing": {
+          "description": "scenario ids that fail in both runs",
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": "Still Failing",
+          "type": "array"
+        },
+        "flaky_changes": {
+          "description": "scenario ids whose flakiness changed",
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": "Flaky Changes",
+          "type": "array"
+        },
+        "cost_delta_usd": {
+          "description": "this run's spend minus the compared run's",
+          "title": "Cost Delta Usd",
+          "type": "number"
+        },
+        "latency_p50_delta_ms": {
+          "description": "this run's p50 latency minus the compared run's",
+          "title": "Latency P50 Delta Ms",
+          "type": "integer"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/$defs/RunDiffItem"
+          },
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "new_failures",
+        "fixed",
+        "still_failing",
+        "flaky_changes",
+        "cost_delta_usd",
+        "latency_p50_delta_ms",
+        "items"
+      ],
+      "title": "RunDiff",
+      "type": "object"
+    },
+    "RunDiffCategory": {
+      "enum": [
+        "new_failure",
+        "fixed",
+        "still_failing",
+        "flaky_change",
+        "unchanged",
+        "added",
+        "removed",
+        "not_comparable"
+      ],
+      "title": "RunDiffCategory",
+      "type": "string"
+    },
+    "RunDiffItem": {
+      "properties": {
+        "scenario_id": {
+          "format": "uuid",
+          "title": "Scenario Id",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "family": {
+          "title": "Family",
+          "type": "string"
+        },
+        "role": {
+          "title": "Role",
+          "type": "string"
+        },
+        "interface_id": {
+          "title": "Interface Id",
+          "type": "string"
+        },
+        "run_scenario_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "run scenario of this run; null when removed",
+          "title": "Run Scenario Id"
+        },
+        "against_run_scenario_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "run scenario of the compared run; null when added",
+          "title": "Against Run Scenario Id"
+        },
+        "before": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Verdict"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "verdict in the compared run",
+          "title": "before"
+        },
+        "after": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Verdict"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "verdict in this run",
+          "title": "after"
+        },
+        "comparable": {
+          "description": "false when the scenario version differs or one side has no verdict",
+          "title": "Comparable",
+          "type": "boolean"
+        },
+        "category": {
+          "$ref": "#/$defs/RunDiffCategory",
+          "title": "category"
+        }
+      },
+      "required": [
+        "scenario_id",
+        "title",
+        "family",
+        "role",
+        "interface_id",
+        "run_scenario_id",
+        "against_run_scenario_id",
+        "before",
+        "after",
+        "comparable",
+        "category"
+      ],
+      "title": "RunDiffItem",
+      "type": "object"
+    },
+    "RunKind": {
+      "enum": [
+        "suite",
+        "seed",
+        "generate",
+        "explore",
+        "simulate",
+        "redteam",
+        "mutation",
+        "hello"
+      ],
+      "title": "RunKind",
+      "type": "string"
+    },
+    "RunStats": {
+      "properties": {
+        "k": {
+          "description": "attempts per scenario the run used",
+          "maximum": 10,
+          "minimum": 1,
+          "title": "K",
+          "type": "integer"
+        },
+        "pass_hat_k": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "fraction of all finished scenarios whose k attempts all passed; null when none finished",
+          "title": "Pass Hat K"
+        },
+        "flaky_rate": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "fraction of finished scenarios with a flaky verdict; null when none finished",
+          "title": "Flaky Rate"
+        },
+        "open_findings": {
+          "description": "findings of the target that are not closed",
+          "minimum": 0,
+          "title": "Open Findings",
+          "type": "integer"
+        },
+        "families": {
+          "items": {
+            "$ref": "#/$defs/FamilyStats"
+          },
+          "title": "Families",
+          "type": "array"
+        },
+        "invariants": {
+          "items": {
+            "$ref": "#/$defs/InvariantStats"
+          },
+          "title": "Invariants",
+          "type": "array"
+        },
+        "latency_ms": {
+          "$ref": "#/$defs/LatencyPercentiles",
+          "title": "latency_ms"
+        },
+        "cost_usd": {
+          "$ref": "#/$defs/CostPercentiles",
+          "title": "cost_usd"
+        },
+        "tiers": {
+          "$ref": "#/$defs/TierMix",
+          "title": "tiers"
+        }
+      },
+      "required": [
+        "k",
+        "pass_hat_k",
+        "flaky_rate",
+        "open_findings",
+        "families",
+        "invariants",
+        "latency_ms",
+        "cost_usd",
+        "tiers"
+      ],
+      "title": "RunStats",
+      "type": "object"
+    },
+    "RunStatus": {
+      "enum": [
+        "queued",
+        "planning",
+        "seeding",
+        "running",
+        "canceling",
+        "completed",
+        "failed",
+        "canceled",
+        "budget_exceeded"
+      ],
+      "title": "RunStatus",
+      "type": "string"
+    },
+    "RunTrigger": {
+      "enum": [
+        "manual",
+        "schedule",
+        "api",
+        "agent"
+      ],
+      "title": "RunTrigger",
+      "type": "string"
+    },
+    "ScheduleTier": {
+      "enum": [
+        "commit",
+        "nightly",
+        "weekly"
+      ],
+      "title": "ScheduleTier",
+      "type": "string"
+    },
+    "Severity": {
+      "enum": [
+        "critical",
+        "high",
+        "medium",
+        "low",
+        "info"
+      ],
+      "title": "Severity",
+      "type": "string"
+    },
+    "SkipReason": {
+      "enum": [
+        "service_down",
+        "hook_missing",
+        "precondition_failed",
+        "env_missing",
+        "role_unavailable",
+        "budget_exceeded",
+        "canceled",
+        "production_blocked",
+        "flag_disabled",
+        "quarantined",
+        "seed_mismatch",
+        "adapter_unsupported"
+      ],
+      "title": "SkipReason",
+      "type": "string"
+    },
+    "TierMix": {
+      "properties": {
+        "code": {
+          "description": "verdicts decided by code",
+          "minimum": 0,
+          "title": "Code",
+          "type": "integer"
+        },
+        "laya": {
+          "minimum": 0,
+          "title": "Laya",
+          "type": "integer"
+        },
+        "judge": {
+          "minimum": 0,
+          "title": "Judge",
+          "type": "integer"
+        },
+        "human": {
+          "minimum": 0,
+          "title": "Human",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "code",
+        "laya",
+        "judge",
+        "human"
+      ],
+      "title": "TierMix",
+      "type": "object"
+    },
+    "Verdict": {
+      "properties": {
+        "status": {
+          "$ref": "#/$defs/VerdictStatus",
+          "title": "status"
+        },
+        "tier": {
+          "$ref": "#/$defs/VerdictTier",
+          "title": "tier"
+        },
+        "confidence": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "confidence from 0 to 1; null when the tier gives none",
+          "title": "Confidence"
+        },
+        "reason_code": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "stable machine readable reason",
+          "title": "Reason Code"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "short human readable reason",
+          "title": "Reason"
+        },
+        "skip_reason": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SkipReason"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "set exactly when status is skipped",
+          "title": "skip_reason"
+        }
+      },
+      "required": [
+        "status",
+        "tier",
+        "confidence",
+        "reason_code",
+        "reason",
+        "skip_reason"
+      ],
+      "title": "Verdict",
+      "type": "object"
+    },
+    "VerdictStatus": {
+      "enum": [
+        "pass",
+        "fail",
+        "flaky",
+        "uncertain",
+        "skipped"
+      ],
+      "title": "VerdictStatus",
+      "type": "string"
+    },
+    "VerdictTier": {
+      "enum": [
+        "code",
+        "laya",
+        "judge",
+        "human"
+      ],
+      "title": "VerdictTier",
+      "type": "string"
+    }
+  },
+  "properties": {
+    "run": {
+      "$ref": "#/$defs/Run",
+      "title": "run"
+    },
+    "stats": {
+      "$ref": "#/$defs/RunStats",
+      "title": "stats"
+    },
+    "findings": {
+      "description": "findings that have an occurrence in this run",
+      "items": {
+        "$ref": "#/$defs/FindingSummary"
+      },
+      "title": "Findings",
+      "type": "array"
+    },
+    "diff": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/RunDiff"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "verdict changes against the previous completed run of the plan; null when there is none",
+      "title": "diff"
+    },
+    "config_snapshot": {
+      "$ref": "#/$defs/RunConfigSnapshot",
+      "title": "config_snapshot"
+    },
+    "generated_at": {
+      "format": "date-time",
+      "title": "Generated At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "run",
+    "stats",
+    "findings",
+    "diff",
+    "config_snapshot",
+    "generated_at"
+  ],
+  "type": "object"
+}

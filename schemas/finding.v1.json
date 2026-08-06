@@ -1,0 +1,296 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "finding.v1.json",
+  "title": "StoredFindingRepro",
+  "description": "Stored form of a finding's repro bundle: artifact ids, never signed URLs.",
+  "$defs": {
+    "ArtifactKind": {
+      "enum": [
+        "screenshot",
+        "recording",
+        "trace",
+        "report_html",
+        "report_json"
+      ],
+      "title": "ArtifactKind",
+      "type": "string"
+    },
+    "ClockSnapshot": {
+      "properties": {
+        "mode": {
+          "description": "pinned through a target hook or real",
+          "enum": [
+            "pinned",
+            "real"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "at": {
+          "description": "the moment every today parameter of the run resolves to",
+          "format": "date-time",
+          "title": "At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "mode",
+        "at"
+      ],
+      "title": "ClockSnapshot",
+      "type": "object"
+    },
+    "JsonValue": {},
+    "ReproSeed": {
+      "properties": {
+        "version": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "seed version the run used; null before Stage 3",
+          "title": "Version"
+        },
+        "hash": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "seed hash pinned for the run; null when unverified",
+          "title": "Hash"
+        }
+      },
+      "required": [
+        "version",
+        "hash"
+      ],
+      "title": "ReproSeed",
+      "type": "object"
+    },
+    "ReproTranscriptRow": {
+      "properties": {
+        "index": {
+          "minimum": 0,
+          "title": "Index",
+          "type": "integer"
+        },
+        "step_id": {
+          "format": "uuid",
+          "title": "Step Id",
+          "type": "string"
+        },
+        "ask": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Ask"
+        },
+        "answer": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Answer"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        }
+      },
+      "required": [
+        "index",
+        "step_id",
+        "ask",
+        "answer",
+        "label"
+      ],
+      "title": "ReproTranscriptRow",
+      "type": "object"
+    },
+    "StoredArtifact": {
+      "properties": {
+        "id": {
+          "description": "artifact id; the store derives the file path from it",
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/ArtifactKind",
+          "title": "kind"
+        },
+        "mime": {
+          "description": "media type served for the artifact",
+          "title": "Mime",
+          "type": "string"
+        },
+        "size_bytes": {
+          "description": "size of the stored file in bytes",
+          "minimum": 0,
+          "title": "Size Bytes",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "mime",
+        "size_bytes"
+      ],
+      "title": "StoredArtifact",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "finding_id": {
+      "format": "uuid",
+      "title": "Finding Id",
+      "type": "string"
+    },
+    "run_id": {
+      "format": "uuid",
+      "title": "Run Id",
+      "type": "string"
+    },
+    "run_scenario_id": {
+      "format": "uuid",
+      "title": "Run Scenario Id",
+      "type": "string"
+    },
+    "attempt": {
+      "minimum": 0,
+      "title": "Attempt",
+      "type": "integer"
+    },
+    "bundle_version": {
+      "minimum": 1,
+      "title": "Bundle Version",
+      "type": "integer"
+    },
+    "scenario_id": {
+      "format": "uuid",
+      "title": "Scenario Id",
+      "type": "string"
+    },
+    "scenario_version": {
+      "minimum": 1,
+      "title": "Scenario Version",
+      "type": "integer"
+    },
+    "scenario_yaml": {
+      "description": "the scenario version the run executed",
+      "title": "Scenario Yaml",
+      "type": "string"
+    },
+    "seed": {
+      "$ref": "#/$defs/ReproSeed",
+      "title": "seed"
+    },
+    "clock": {
+      "$ref": "#/$defs/ClockSnapshot",
+      "title": "clock"
+    },
+    "browser_session_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Browser Session Id"
+    },
+    "transcript": {
+      "items": {
+        "$ref": "#/$defs/ReproTranscriptRow"
+      },
+      "title": "Transcript",
+      "type": "array"
+    },
+    "expected": {
+      "$ref": "#/$defs/JsonValue",
+      "title": "expected"
+    },
+    "actual": {
+      "$ref": "#/$defs/JsonValue",
+      "title": "actual"
+    },
+    "oracle_rows": {
+      "description": "at most 20 oracle rows, secrets redacted",
+      "items": {
+        "additionalProperties": {
+          "$ref": "#/$defs/JsonValue"
+        },
+        "type": "object"
+      },
+      "maxItems": 20,
+      "title": "Oracle Rows",
+      "type": "array"
+    },
+    "invariant_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Invariant Id"
+    },
+    "schema_version": {
+      "const": 1,
+      "description": "version of this document",
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "screencast": {
+      "description": "artifact ids; the API signs them into ArtifactRef when it serves the repro",
+      "items": {
+        "$ref": "#/$defs/StoredArtifact"
+      },
+      "title": "Screencast",
+      "type": "array"
+    }
+  },
+  "required": [
+    "finding_id",
+    "run_id",
+    "run_scenario_id",
+    "attempt",
+    "bundle_version",
+    "scenario_id",
+    "scenario_version",
+    "scenario_yaml",
+    "seed",
+    "clock",
+    "browser_session_id",
+    "transcript",
+    "expected",
+    "actual",
+    "oracle_rows",
+    "invariant_id",
+    "schema_version",
+    "screencast"
+  ],
+  "type": "object"
+}
