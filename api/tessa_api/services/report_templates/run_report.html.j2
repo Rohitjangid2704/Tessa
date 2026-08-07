@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>{{ view.title }}</title>
+<style>
+:root {
+  color-scheme: light dark;
+  --bg: #f7f7f5;
+  --surface: #ffffff;
+  --text: #1c1c1a;
+  --muted: #62625c;
+  --line: #dcdcd4;
+  --link: #0b5cad;
+  --ok: #1d6b3a;
+  --ok-bg: #e3f3e8;
+  --warn: #8a5a00;
+  --warn-bg: #fbefd2;
+  --bad: #a1271f;
+  --bad-bg: #fbe3e0;
+  --info: #2c4f7c;
+  --info-bg: #e4ecf7;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #161614;
+    --surface: #20201d;
+    --text: #ecece6;
+    --muted: #a4a49b;
+    --line: #38382f;
+    --link: #78b4f0;
+    --ok: #7fd49b;
+    --ok-bg: #1d3526;
+    --warn: #f0c36a;
+    --warn-bg: #3a2f14;
+    --bad: #f19a92;
+    --bad-bg: #402220;
+    --info: #9bbbe6;
+    --info-bg: #1f2b3c;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  padding: 24px 16px 48px;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+main, header, footer { max-width: 1080px; margin: 0 auto; }
+h1 { font-size: 24px; margin: 0 0 4px; }
+h2 { font-size: 17px; margin: 32px 0 8px; }
+a { color: var(--link); }
+.meta { color: var(--muted); margin: 0 0 8px; overflow-wrap: anywhere; }
+.badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid var(--line);
+}
+.ok { color: var(--ok); background: var(--ok-bg); }
+.warn { color: var(--warn); background: var(--warn-bg); }
+.bad { color: var(--bad); background: var(--bad-bg); }
+.info { color: var(--info); background: var(--info-bg); }
+.muted { color: var(--muted); }
+.sev-critical, .sev-high { color: var(--bad); background: var(--bad-bg); }
+.sev-medium { color: var(--warn); background: var(--warn-bg); }
+.sev-low, .sev-info { color: var(--info); background: var(--info-bg); }
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+.tile {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+}
+.tile dt { color: var(--muted); font-size: 12px; }
+.tile dd { margin: 2px 0 0; font-size: 22px; font-weight: 650; overflow-wrap: anywhere; }
+.tile dd small { display: block; font-size: 12px; font-weight: 400; color: var(--muted); }
+.table-wrap {
+  overflow-x: auto;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+table { border-collapse: collapse; width: 100%; }
+th, td {
+  text-align: left;
+  vertical-align: top;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+  overflow-wrap: anywhere;
+}
+th { font-size: 12px; color: var(--muted); font-weight: 600; white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+td.badge-cell span { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+.note { color: var(--muted); margin: 0 0 8px; }
+.empty { color: var(--muted); font-style: italic; }
+footer { margin-top: 40px; color: var(--muted); font-size: 13px; }
+@media print {
+  body { background: #fff; color: #000; }
+  .table-wrap, .tile { border-color: #999; }
+}
+</style>
+</head>
+<body>
+<header>
+<h1>{{ view.title }}</h1>
+<p class="meta"><span class="badge {{ view.status_css }}">{{ view.status }}</span> {{ view.subtitle }}</p>
+<p class="meta"><a href="{{ view.run_url }}">Open this run in Tessa</a></p>
+</header>
+<main>
+<section>
+<h2>Summary</h2>
+<dl class="tiles">
+{% for tile in view.tiles %}
+<div class="tile"><dt>{{ tile.label }}</dt><dd>{{ tile.value }}{% if tile.detail %}<small>{{ tile.detail }}</small>{% endif %}</dd></div>
+{% endfor %}
+</dl>
+</section>
+{% for section in view.sections %}
+<section>
+<h2>{{ section.heading }}</h2>
+{% if section.note %}
+<p class="note">{{ section.note }}</p>
+{% endif %}
+{% if section.table is none %}
+<p class="empty">{{ section.empty }}</p>
+{% else %}
+<div class="table-wrap">
+<table>
+<thead><tr>{% for header in section.table.headers %}<th scope="col">{{ header }}</th>{% endfor %}</tr></thead>
+<tbody>
+{% for row in section.table.rows %}
+<tr>{% for cell in row %}<td{% if cell.badge %} class="badge-cell"{% elif cell.css %} class="{{ cell.css }}"{% endif %}>{% if cell.badge %}<span class="{{ cell.css }}">{% endif %}{% if cell.href %}<a href="{{ cell.href }}">{{ cell.text }}</a>{% else %}{{ cell.text }}{% endif %}{% if cell.badge %}</span>{% endif %}{% if cell.detail %}<br><small class="muted">{{ cell.detail }}</small>{% endif %}</td>{% endfor %}</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% if section.table.omitted %}
+<p class="note">{{ section.table.omitted }} more rows are not shown; open the run in Tessa for the full list.</p>
+{% endif %}
+{% endif %}
+</section>
+{% endfor %}
+</main>
+<footer>
+<p>Generated {{ view.generated_at }}. This report is a snapshot: later changes to findings or runs are not reflected. Text taken from the system under test is escaped.</p>
+</footer>
+</body>
+</html>
