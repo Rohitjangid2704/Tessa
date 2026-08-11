@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "id": null,
+  "title": "Admin lists rooms",
+  "feature_id": null,
+  "family": "rooms",
+  "role": "admin",
+  "interface_id": "admin_api",
+  "timeout_seconds": null,
+  "cell": null,
+  "authored_from": null,
+  "synthetic": false,
+  "steps": [
+    {
+      "label": null,
+      "as": null,
+      "gold_from": null,
+      "expect_db": null,
+      "adapter": "http",
+      "request": {
+        "method": "GET",
+        "path": "/api/rooms",
+        "headers": {},
+        "query": {},
+        "body": null
+      },
+      "expect": {
+        "status": 200,
+        "schema": null,
+        "fields": [],
+        "latency": null,
+        "internal_ids": true,
+        "free_text": null
+      }
+    }
+  ]
+}

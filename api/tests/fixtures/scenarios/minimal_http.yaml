@@ -1,0 +1,12 @@
+schema_version: 1
+title: Admin lists rooms
+family: rooms
+role: admin
+interface_id: admin_api
+steps:
+  - adapter: http
+    request:
+      method: GET
+      path: /api/rooms
+    expect:
+      status: 200

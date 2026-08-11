@@ -1,0 +1,40 @@
+id: create_maintenance_issue
+title: Create a maintenance issue from the chat panel
+feature_ids: [smart_log.write.create_issue]
+role: staff
+steps:
+  - action: goto
+    url: /login
+    expect:
+      url: /login
+  - action: fill
+    target:
+      role: textbox
+      name: Email
+    value: ${STAFF_EMAIL}
+  - action: fill
+    target:
+      role: textbox
+      name: Password
+    value: ${STAFF_PASSWORD}
+  - action: click
+    target:
+      role: button
+      name: Sign in
+    expect:
+      url: /
+      text: [Smart Log]
+  - action: fill
+    target:
+      selector: "[data-testid=chat-input]"
+    value: Create a maintenance issue for room 20003, the shower leaks
+  - action: press
+    value: Enter
+    expect:
+      text: ["Do you want me to create this issue?"]
+  - action: click
+    target:
+      role: button
+      name: Confirm
+    expect:
+      text: [Issue created]

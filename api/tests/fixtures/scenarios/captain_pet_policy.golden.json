@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "id": "pet-policy-then-more-detail",
+  "title": "Pet policy, then more detail on service animals",
+  "feature_id": "documents.read.policies",
+  "family": "documents",
+  "role": "owner",
+  "interface_id": "chat_sse",
+  "timeout_seconds": 180,
+  "cell": null,
+  "authored_from": null,
+  "synthetic": false,
+  "steps": [
+    {
+      "label": "What is our pet policy",
+      "as": null,
+      "gold_from": null,
+      "expect_db": null,
+      "adapter": "sse",
+      "ask": "what is our pet policy?",
+      "request": {
+        "method": "POST",
+        "path": "/api/chat/stream",
+        "headers": {},
+        "query": {},
+        "body": {
+          "message": "what is our pet policy?"
+        }
+      },
+      "expect": {
+        "status": 200,
+        "events": null,
+        "tools": {
+          "include": [
+            "search_documents"
+          ],
+          "exclude": [
+            "query_rooms"
+          ],
+          "none": false,
+          "at_least_one": false,
+          "max_calls": null
+        },
+        "cards": null,
+        "text_contains": [],
+        "text_contains_any": [],
+        "text_not_contains": [
+          "HOW YOU WORK"
+        ],
+        "non_empty_answer": true,
+        "latency": {
+          "max_ms": 60000,
+          "max_first_byte_ms": 5000
+        },
+        "internal_ids": true,
+        "free_text": "Guests may bring up to two pets under 10 kg, a 50 dollar cleaning fee applies per stay, pets are not allowed in the restaurant and service animals are welcome at no charge."
+      }
+    },
+    {
+      "label": "Follow up on service animals",
+      "as": null,
+      "gold_from": null,
+      "expect_db": null,
+      "adapter": "sse",
+      "ask": "tell me more about the service animal rules",
+      "request": {
+        "method": "POST",
+        "path": "/api/chat/stream",
+        "headers": {},
+        "query": {},
+        "body": {
+          "message": "tell me more about the service animal rules"
+        }
+      },
+      "expect": {
+        "status": 200,
+        "events": null,
+        "tools": {
+          "include": [
+            "search_documents"
+          ],
+          "exclude": [],
+          "none": false,
+          "at_least_one": false,
+          "max_calls": 2
+        },
+        "cards": null,
+        "text_contains": [],
+        "text_contains_any": [
+          "two questions",
+          "service animal"
+        ],
+        "text_not_contains": [],
+        "non_empty_answer": true,
+        "latency": null,
+        "internal_ids": true,
+        "free_text": "Staff may ask only two questions and may not ask for documentation."
+      }
+    }
+  ]
+}

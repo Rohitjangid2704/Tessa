@@ -1,0 +1,24 @@
+name: open_maintenance
+feature_ids: [smart_log.read.open_maintenance]
+language: sql
+truth_source: primary_db
+params_schema:
+  type: object
+  properties:
+    tenant_id:
+      type: string
+      x-source: tenant
+    today:
+      type: string
+      format: date
+      x-source: clock
+  required: [tenant_id, today]
+sentence_template: >-
+  {{ rows | length }} rooms have open maintenance issues, most of them room {{ rows[0].room }}
+  with {{ rows[0].open_issues }}.
+gold_points:
+  - key: open_rooms
+    expression: rows | length
+    template: "{{ value }} rooms"
+  - key: top_room
+    expression: rows[0].room

@@ -1,0 +1,163 @@
+{
+  "schema_version": 1,
+  "id": "rooms-list-boundaries",
+  "title": "Rooms list respects roles",
+  "feature_id": "rooms.read.list",
+  "family": "rooms",
+  "role": "admin",
+  "interface_id": "admin_api",
+  "timeout_seconds": 120,
+  "cell": {
+    "role": "admin",
+    "interface_id": "admin_api"
+  },
+  "authored_from": "0198f6f2-4c2a-7d10-9c1e-6a4f0d3b8e11",
+  "synthetic": false,
+  "steps": [
+    {
+      "label": "Admin reads the first page",
+      "as": null,
+      "gold_from": null,
+      "expect_db": null,
+      "adapter": "http",
+      "request": {
+        "method": "GET",
+        "path": "/api/rooms",
+        "headers": {
+          "Authorization": "Bearer ${ADMIN_TOKEN}",
+          "Accept": "application/json"
+        },
+        "query": {
+          "limit": 5,
+          "status": [
+            "open",
+            "closed"
+          ]
+        },
+        "body": null
+      },
+      "expect": {
+        "status": [
+          200
+        ],
+        "schema": {
+          "type": "object",
+          "required": [
+            "items"
+          ]
+        },
+        "fields": [
+          {
+            "path": "items",
+            "exists": null,
+            "equals": null,
+            "type": "array",
+            "matches": null,
+            "min_length": 1,
+            "max_length": null,
+            "gte": null,
+            "lte": null
+          },
+          {
+            "path": "items[0].number",
+            "exists": null,
+            "equals": null,
+            "type": null,
+            "matches": "^[0-9]{5}$",
+            "min_length": null,
+            "max_length": null,
+            "gte": null,
+            "lte": null
+          },
+          {
+            "path": "$.total",
+            "exists": null,
+            "equals": null,
+            "type": null,
+            "matches": null,
+            "min_length": null,
+            "max_length": null,
+            "gte": 1.0,
+            "lte": null
+          },
+          {
+            "path": "items[0].password_hash",
+            "exists": false,
+            "equals": null,
+            "type": null,
+            "matches": null,
+            "min_length": null,
+            "max_length": null,
+            "gte": null,
+            "lte": null
+          },
+          {
+            "path": "next_cursor",
+            "exists": null,
+            "equals": null,
+            "type": "null",
+            "matches": null,
+            "min_length": null,
+            "max_length": null,
+            "gte": null,
+            "lte": null
+          }
+        ],
+        "latency": {
+          "max_ms": 2000
+        },
+        "internal_ids": true,
+        "free_text": "A page of rooms with a count"
+      }
+    },
+    {
+      "label": "Anonymous is refused",
+      "as": "anonymous",
+      "gold_from": null,
+      "expect_db": null,
+      "adapter": "http",
+      "request": {
+        "method": "GET",
+        "path": "/api/rooms",
+        "headers": {},
+        "query": {},
+        "body": null
+      },
+      "expect": {
+        "status": [
+          401,
+          403
+        ],
+        "schema": null,
+        "fields": [],
+        "latency": null,
+        "internal_ids": true,
+        "free_text": null
+      }
+    },
+    {
+      "label": null,
+      "as": "viewer",
+      "gold_from": null,
+      "expect_db": null,
+      "adapter": "http",
+      "request": {
+        "method": "POST",
+        "path": "/api/rooms/${ROOM_ID}/notes",
+        "headers": {},
+        "query": {},
+        "body": {
+          "text": "hello"
+        }
+      },
+      "expect": {
+        "status": 403,
+        "schema": null,
+        "fields": [],
+        "latency": null,
+        "internal_ids": false,
+        "free_text": null
+      }
+    }
+  ]
+}

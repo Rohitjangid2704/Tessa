@@ -1,0 +1,50 @@
+schema_version: 1
+id: pet-policy-then-more-detail
+title: Pet policy, then more detail on service animals
+feature_id: documents.read.policies
+family: documents
+role: owner
+interface_id: chat_sse
+timeout_seconds: 180
+steps:
+  - adapter: sse
+    label: What is our pet policy
+    ask: what is our pet policy?
+    request:
+      method: POST
+      path: /api/chat/stream
+      body:
+        message: what is our pet policy?
+    expect:
+      status: 200
+      tools:
+        include:
+          - search_documents
+        exclude:
+          - query_rooms
+      text_not_contains:
+        - HOW YOU WORK
+      latency:
+        max_first_byte_ms: 5000
+        max_ms: 60000
+      free_text: >-
+        Guests may bring up to two pets under 10 kg, a 50 dollar cleaning fee applies per stay,
+        pets are not allowed in the restaurant and service animals are welcome at no charge.
+  - adapter: sse
+    label: Follow up on service animals
+    ask: tell me more about the service animal rules
+    request:
+      method: POST
+      path: /api/chat/stream
+      body:
+        message: tell me more about the service animal rules
+    expect:
+      status: 200
+      tools:
+        include:
+          - search_documents
+        max_calls: 2
+      text_contains_any:
+        - two questions
+        - service animal
+      free_text: Staff may ask only two questions and may not ask for documentation.

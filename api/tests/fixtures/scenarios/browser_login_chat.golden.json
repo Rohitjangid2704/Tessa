@@ -1,0 +1,189 @@
+{
+  "schema_version": 1,
+  "id": null,
+  "title": "Staff signs in and asks the chat",
+  "feature_id": "smart_log.read.open_maintenance",
+  "family": "smart-log",
+  "role": "staff",
+  "interface_id": "web_ui",
+  "timeout_seconds": 240,
+  "cell": null,
+  "authored_from": null,
+  "synthetic": false,
+  "steps": [
+    {
+      "label": null,
+      "as": null,
+      "gold_from": null,
+      "expect_db": null,
+      "adapter": "browser",
+      "action": "goto",
+      "url": "/login",
+      "target": null,
+      "value": null,
+      "expect": {
+        "dom_state": {
+          "url": "/login",
+          "title_contains": null,
+          "text_contains": [],
+          "text_not_contains": [],
+          "visible": [
+            {
+              "role": "button",
+              "name": "Sign in",
+              "selector": null
+            }
+          ],
+          "hidden": []
+        },
+        "console": {
+          "fail_on": [
+            "error"
+          ],
+          "allow": [
+            "favicon\\.ico"
+          ]
+        },
+        "free_text": null
+      }
+    },
+    {
+      "label": null,
+      "as": null,
+      "gold_from": null,
+      "expect_db": null,
+      "adapter": "browser",
+      "action": "fill",
+      "url": null,
+      "target": {
+        "role": "textbox",
+        "name": "Email",
+        "selector": null
+      },
+      "value": "${STAFF_EMAIL}",
+      "expect": {
+        "dom_state": null,
+        "console": null,
+        "free_text": null
+      }
+    },
+    {
+      "label": null,
+      "as": null,
+      "gold_from": null,
+      "expect_db": null,
+      "adapter": "browser",
+      "action": "fill",
+      "url": null,
+      "target": {
+        "role": "textbox",
+        "name": "Password",
+        "selector": null
+      },
+      "value": "${STAFF_PASSWORD}",
+      "expect": {
+        "dom_state": null,
+        "console": null,
+        "free_text": null
+      }
+    },
+    {
+      "label": null,
+      "as": null,
+      "gold_from": null,
+      "expect_db": null,
+      "adapter": "browser",
+      "action": "click",
+      "url": null,
+      "target": {
+        "role": "button",
+        "name": "Sign in",
+        "selector": null
+      },
+      "value": null,
+      "expect": {
+        "dom_state": {
+          "url": "/",
+          "title_contains": null,
+          "text_contains": [
+            "Smart Log"
+          ],
+          "text_not_contains": [],
+          "visible": [],
+          "hidden": [
+            {
+              "role": null,
+              "name": null,
+              "selector": "[data-testid=login-error]"
+            }
+          ]
+        },
+        "console": null,
+        "free_text": null
+      }
+    },
+    {
+      "label": null,
+      "as": null,
+      "gold_from": null,
+      "expect_db": null,
+      "adapter": "browser",
+      "action": "fill",
+      "url": null,
+      "target": {
+        "role": null,
+        "name": null,
+        "selector": "[data-testid=chat-input]"
+      },
+      "value": "Which maintenance issues are still open?",
+      "expect": {
+        "dom_state": null,
+        "console": null,
+        "free_text": null
+      }
+    },
+    {
+      "label": null,
+      "as": null,
+      "gold_from": null,
+      "expect_db": null,
+      "adapter": "browser",
+      "action": "press",
+      "url": null,
+      "target": null,
+      "value": "Enter",
+      "expect": {
+        "dom_state": null,
+        "console": null,
+        "free_text": null
+      }
+    },
+    {
+      "label": null,
+      "as": null,
+      "gold_from": null,
+      "expect_db": null,
+      "adapter": "browser",
+      "action": "wait_for",
+      "url": null,
+      "target": null,
+      "value": null,
+      "expect": {
+        "dom_state": {
+          "url": null,
+          "title_contains": null,
+          "text_contains": [
+            "open"
+          ],
+          "text_not_contains": [
+            "Something went wrong"
+          ],
+          "visible": [],
+          "hidden": []
+        },
+        "console": null,
+        "free_text": "Count of open items and the rooms with the most"
+      }
+    }
+  ]
+}

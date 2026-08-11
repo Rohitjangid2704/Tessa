@@ -1,0 +1,35 @@
+schema: http://localhost:8000/schemas/bundle.v1.json
+target_token: tgt_minimal234567abcdefghi
+app:
+  name: Notes API
+  summary: A small notes service with a JSON API.
+  kind: api
+  how_to_run: uv run uvicorn notes.main:app --port 8080
+interfaces:
+  - id: notes_http
+    kind: http
+    base_path: /api
+    health_endpoint: /health
+roles:
+  - id: anonymous
+    level: 0
+    description: Anyone, no login
+features:
+  - id: notes.read.list
+    area: Notes
+    kind: read
+    description: List all notes
+    interfaces: [notes_http]
+    roles: [all]
+    examples:
+      - request:
+          method: GET
+          path: /api/notes
+        expected: A JSON array of notes, newest first
+environment:
+  - name: NOTES_BASE_URL
+    kind: url
+    secret: false
+    required: true
+    purpose: Base URL of the QA deployment
+    interfaces: [notes_http]

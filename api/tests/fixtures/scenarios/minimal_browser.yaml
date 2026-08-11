@@ -1,0 +1,9 @@
+schema_version: 1
+title: Staff opens the login page
+family: login
+role: staff
+interface_id: web_ui
+steps:
+  - adapter: browser
+    action: goto
+    url: /login

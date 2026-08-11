@@ -1,0 +1,241 @@
+schema: http://localhost:8000/schemas/bundle.v1.json
+target_token: tgt_gracie234567abcdefghij
+app:
+  name: Gracie
+  summary: >-
+    A voice and chat assistant for hotel staff. It answers questions about rooms, maintenance
+    issues and calendar events from live property data, and creates maintenance issues after an
+    explicit confirmation.
+  kind: llm_assistant
+  how_to_run: docker compose up -d && npm run dev
+  health_endpoints:
+    - GET /health
+  ports: [8080, 3000]
+  base_paths: [/api, /api/chat]
+interfaces:
+  - id: chat_sse
+    kind: sse
+    base_path: /api/chat
+    auth:
+      type: bearer
+      header: Authorization
+      token_source:
+        staff: POST /api/auth/login with ${STAFF_EMAIL} and ${STAFF_PASSWORD}
+        manager: ${MANAGER_TOKEN}
+        admin: ${ADMIN_TOKEN}
+    health_endpoint: /health
+    shapes:
+      - name: send chat message
+        method: POST
+        path: /message
+        request_example:
+          message: Which maintenance issues are still open?
+        response_example:
+          answer: Four rooms have open maintenance issues.
+    stream_events: [token, tool_call, card, done]
+    rate_limits: 30 messages per minute per user
+    idempotency: none
+  - id: browser
+    kind: browser
+    base_path: /
+  - id: admin_api
+    kind: http
+    base_path: /api/admin
+    auth:
+      type: bearer
+      header: Authorization
+      token_source:
+        admin: ${ADMIN_TOKEN}
+    health_endpoint: /health
+roles:
+  - id: staff
+    level: 1
+    description: Front desk and housekeeping staff of one property
+    can_see: [rooms and issues of own property]
+    can_do: [ask questions, create maintenance issues]
+    credential_env: STAFF_PASSWORD
+  - id: manager
+    level: 2
+    description: Property manager
+    can_see: [everything staff can see, calendar events]
+    can_do: [everything staff can do, close issues]
+    credential_env: MANAGER_TOKEN
+  - id: admin
+    level: 3
+    description: Chain administrator
+    can_see: [all properties]
+    can_do: [manage users]
+    credential_env: ADMIN_TOKEN
+features:
+  - id: smart_log.read.open_maintenance
+    area: Smart Log
+    kind: read
+    description: List maintenance issues that are still open, optionally per room
+    interfaces: [chat_sse, browser]
+    roles: [all]
+    flag: none
+    preconditions: [seed.smart_log_history]
+    examples:
+      - ask: Which maintenance issues are still open?
+        expected: count of open items and the rooms with the most, from the oracle
+        oracle: open_maintenance
+      - ask: "Show maintenance issues in room 20003. Then: only the ones still open"
+        expected: second answer narrows the first list
+    invariants: [no_internal_ids, count_matches_oracle, empty_set_honesty]
+    cleanup: none
+    confidence: high
+  - id: smart_log.write.create_issue
+    area: Smart Log
+    kind: write
+    description: Create a maintenance issue for a room after the user confirms
+    interfaces: [chat_sse, browser]
+    roles: [staff, manager]
+    flag: confirmation_gate
+    preconditions: [seed.smart_log_history]
+    examples:
+      - ask: Create a maintenance issue for room 20003, the shower leaks
+        expected: Gracie asks for confirmation and does not claim the issue exists yet
+    invariants: [no_claim_before_confirmation]
+    cleanup: delete the issue created by the run
+    confidence: medium
+    writes_to: smart_log_issue
+    confirmation: button-only, typed yes accepted
+    expect_db:
+      table: smart_log_issue
+      where:
+        room_number: "20003"
+        status: open
+  - id: auth.login.staff
+    area: Auth
+    kind: auth
+    description: A staff member signs in with email and password
+    interfaces: [browser]
+    roles: [staff]
+    examples:
+      - request:
+          method: POST
+          path: /api/auth/login
+        expected: A bearer token that unlocks the chat interface
+    invariants: [auth_boundary]
+    confidence: high
+  - id: admin.users.list
+    area: Admin
+    kind: admin
+    description: Chain administrators list the users of a property
+    interfaces: [admin_api]
+    roles: [admin]
+    examples:
+      - request:
+          method: GET
+          path: /api/admin/users
+        expected: A page of users, never returning password hashes
+    invariants: [auth_boundary, no_internal_ids]
+    confidence: medium
+data_model:
+  stores:
+    - name: primary
+      kind: postgres
+      entities:
+        - name: smart_log_issue
+          key_fields: [id, room_id]
+          tenant_field: property_id
+          status_fields: [status]
+          soft_delete: deleted_at is not null
+        - name: room
+          key_fields: [id, room_number]
+          tenant_field: property_id
+  timezone: UTC in storage, property local time in answers
+truth_sources:
+  - id: primary_db
+    kind: database
+    description: Smart Log and rooms tables, read-only role
+    connection_env: TRUTH_DB_DSN
+    dialect: postgres
+seeds:
+  description: A QA property with 40 rooms and a fixed Smart Log history
+  reset_script: seeds/reset.sql
+  hash_command: bash seeds/hash.sh
+  dsn_env: SEED_DB_DSN
+invariants:
+  - id: no_internal_ids
+    rule: Answers and API payloads never contain internal database ids
+    check: code
+  - id: count_matches_oracle
+    rule: A counted answer equals the oracle count
+    check: oracle
+  - id: empty_set_honesty
+    rule: An empty result is reported as empty, never invented
+    check: probe
+  - id: no_claim_before_confirmation
+    rule: The assistant never says a write happened before the confirmation
+    check: probe
+  - id: auth_boundary
+    rule: A role never sees data above its level
+    check: code
+flags:
+  - id: confirmation_gate
+    env_var: GRACIE_CONFIRM_WRITES
+    description: Writes need an explicit confirmation
+    affects: [smart_log.write.create_issue]
+environment:
+  - name: GRACIE_BASE_URL
+    kind: url
+    secret: false
+    required: true
+    purpose: Base URL of the QA deployment
+    interfaces: [chat_sse, browser, admin_api]
+  - name: STAFF_EMAIL
+    kind: string
+    secret: false
+    required: true
+    purpose: Login email of the QA staff user
+    interfaces: [chat_sse, browser]
+  - name: STAFF_PASSWORD
+    kind: password
+    secret: true
+    required: true
+    purpose: Password of the QA staff user
+    interfaces: [chat_sse, browser]
+  - name: MANAGER_TOKEN
+    kind: token
+    secret: true
+    required: true
+    purpose: API token of the QA manager
+    interfaces: [chat_sse]
+  - name: ADMIN_TOKEN
+    kind: token
+    secret: true
+    required: true
+    purpose: API token of the QA admin
+    interfaces: [chat_sse, admin_api]
+  - name: SMART_LOG_TENANT_ID
+    kind: string
+    secret: false
+    required: true
+    purpose: Id of the seeded QA property used by the oracles
+  - name: TRUTH_DB_DSN
+    kind: dsn
+    secret: true
+    required: true
+    purpose: Read-only connection to the Smart Log database
+  - name: SEED_DB_DSN
+    kind: dsn
+    secret: true
+    required: false
+    purpose: Write connection used by the seed reset script
+test_hooks:
+  available:
+    - id: health
+      description: Health probe
+      endpoint: GET /health
+  missing:
+    - id: pin_clock
+      description: Pin the server clock to a given instant
+    - id: flush_cache
+      description: Flush the answer cache between scenarios
+limitations:
+  - Voice input cannot be driven from outside
+cleanup:
+  irreversible: [notification emails sent to staff]
+  delete_after_run: [maintenance issues created by the suite]
+  costs_money: [model calls behind every chat answer]

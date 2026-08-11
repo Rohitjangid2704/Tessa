@@ -1,0 +1,41 @@
+schema_version: 1
+title: Staff asks for a fire inspection and gets a draft card
+feature_id: calendar.write.create_event
+family: write-happy
+role: owner
+interface_id: chat_sse
+steps:
+  - adapter: sse
+    ask: book a fire inspection for room 10002 next tuesday 10 to 11, engineering owns it
+    request:
+      method: POST
+      path: /api/chat/stream
+      body:
+        message: book a fire inspection for room 10002 next tuesday 10 to 11, engineering owns it
+    expect:
+      status: 200
+      events:
+        include:
+          - done
+        exclude:
+          - error
+      tools:
+        include:
+          - name: propose_calendar_change
+            args:
+              room: "10002"
+        exclude:
+          - propose_smart_log_entry
+          - name: propose_calendar_change
+            args:
+              room: "99999"
+        max_calls: 1
+      cards:
+        min_count: 1
+        max_count: 1
+        include:
+          - kind: confirmation
+      text_not_contains:
+        - has been booked
+        - has been scheduled
+      free_text: Introduces a draft rather than saying the inspection is already scheduled

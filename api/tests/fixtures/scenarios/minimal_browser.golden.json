@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": null,
+  "title": "Staff opens the login page",
+  "feature_id": null,
+  "family": "login",
+  "role": "staff",
+  "interface_id": "web_ui",
+  "timeout_seconds": null,
+  "cell": null,
+  "authored_from": null,
+  "synthetic": false,
+  "steps": [
+    {
+      "label": null,
+      "as": null,
+      "gold_from": null,
+      "expect_db": null,
+      "adapter": "browser",
+      "action": "goto",
+      "url": "/login",
+      "target": null,
+      "value": null,
+      "expect": {
+        "dom_state": null,
+        "console": null,
+        "free_text": null
+      }
+    }
+  ]
+}

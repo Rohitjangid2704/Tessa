@@ -1,0 +1,63 @@
+{
+  "valid": false,
+  "errors": [
+    {
+      "code": "oracle_param_undeclared",
+      "severity": "error",
+      "file": "oracle/open_maintenance.sql",
+      "pointer": null,
+      "line": null,
+      "column": null
+    },
+    {
+      "code": "unknown_role",
+      "severity": "error",
+      "file": "flows/create_maintenance_issue.yaml",
+      "pointer": "/role",
+      "line": 4,
+      "column": 1
+    },
+    {
+      "code": "seed_file_missing",
+      "severity": "error",
+      "file": "manifest.yaml",
+      "pointer": "/seeds/reset_script",
+      "line": null,
+      "column": null
+    },
+    {
+      "code": "placeholder_not_in_env_template",
+      "severity": "error",
+      "file": "flows/create_maintenance_issue.yaml",
+      "pointer": null,
+      "line": 14,
+      "column": 12
+    },
+    {
+      "code": "placeholder_not_in_env_template",
+      "severity": "error",
+      "file": "manifest.yaml",
+      "pointer": null,
+      "line": 23,
+      "column": 42
+    }
+  ],
+  "warnings": [
+    {
+      "code": "env_template_missing_variable",
+      "severity": "warning",
+      "file": "manifest.yaml",
+      "pointer": "/environment/1",
+      "line": null,
+      "column": null
+    },
+    {
+      "code": "placeholder_not_declared",
+      "severity": "warning",
+      "file": "README.md",
+      "pointer": null,
+      "line": 1,
+      "column": 10
+    }
+  ]
+}

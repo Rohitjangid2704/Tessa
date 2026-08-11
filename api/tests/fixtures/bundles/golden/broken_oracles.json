@@ -1,0 +1,30 @@
+{
+  "valid": false,
+  "errors": [
+    {
+      "code": "oracle_multiple_statements",
+      "severity": "error",
+      "file": "oracle/open_maintenance.sql",
+      "pointer": null,
+      "line": null,
+      "column": null
+    },
+    {
+      "code": "unknown_feature",
+      "severity": "error",
+      "file": "oracle/stray.yaml",
+      "pointer": "/feature_ids/0",
+      "line": 2,
+      "column": 15
+    },
+    {
+      "code": "oracle_forbidden_function",
+      "severity": "error",
+      "file": "oracle/stray.sql",
+      "pointer": null,
+      "line": null,
+      "column": null
+    }
+  ],
+  "warnings": []
+}

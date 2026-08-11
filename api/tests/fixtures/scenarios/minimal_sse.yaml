@@ -1,0 +1,16 @@
+schema_version: 1
+title: Staff asks about open maintenance
+feature_id: smart_log.read.open_maintenance
+family: smart-log
+role: staff
+interface_id: chat_sse
+steps:
+  - adapter: sse
+    ask: Which maintenance issues are still open?
+    request:
+      method: POST
+      path: /api/chat
+      body:
+        message: Which maintenance issues are still open?
+    expect:
+      status: 200

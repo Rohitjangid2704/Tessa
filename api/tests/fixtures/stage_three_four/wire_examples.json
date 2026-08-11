@@ -1,0 +1,277 @@
+{
+  "Seed": {
+    "id": "0198f6f2-7b00-7a00-9d00-0000000000a1",
+    "target_id": "0198f6f2-7b00-7a00-9d00-000000000006",
+    "bundle_id": "0198f6f2-7b00-7a00-9d00-000000000005",
+    "version": 2,
+    "declared_hash": "sha256:9f2c61d0a4be",
+    "hash_source": "first_reset",
+    "observed_hash": "sha256:9f2c61d0a4be",
+    "last_reset_at": "2026-10-05T09:12:03.250Z",
+    "last_reset_status": "ok",
+    "last_reset_run_id": "0198f6f2-4c2a-7d10-9c1e-6a4f0d3b8e11",
+    "has_reset_script": true,
+    "has_hash_command": true,
+    "reset_script_path": "seeds/reset.sql",
+    "hash_command": "psql ${TRUTH_DSN} -Atc 'select md5(string_agg(id::text, \\',\\')) from rooms'",
+    "material_sha256": "0b5d1c5a7e4f3a6c9d2e8f1a0b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e"
+  },
+  "SeedUnverified": {
+    "id": "0198f6f2-7b00-7a00-9d00-0000000000a2",
+    "target_id": "0198f6f2-7b00-7a00-9d00-000000000006",
+    "bundle_id": "0198f6f2-7b00-7a00-9d00-000000000005",
+    "version": 1,
+    "declared_hash": null,
+    "hash_source": "first_reset",
+    "observed_hash": null,
+    "last_reset_at": null,
+    "last_reset_status": null,
+    "last_reset_run_id": null,
+    "has_reset_script": false,
+    "has_hash_command": false,
+    "reset_script_path": null,
+    "hash_command": null,
+    "material_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "SeedResetCreate": {
+    "seed_id": null,
+    "confirm_target_name": "Gracie QA"
+  },
+  "OracleTemplate": {
+    "id": "0198f6f2-7b00-7a00-9d00-0000000000b1",
+    "bundle_id": "0198f6f2-7b00-7a00-9d00-000000000005",
+    "name": "open_maintenance",
+    "feature_ids": ["smart_log.read.open_maintenance"],
+    "language": "sql",
+    "source": "select room, count(*) as n from smart_logs where tenant_id = :tenant_id group by room",
+    "params_schema": {
+      "type": "object",
+      "properties": {
+        "tenant_id": {"type": "string", "x-source": "tenant"},
+        "today": {"type": "string", "format": "date", "x-source": "clock"}
+      },
+      "required": ["tenant_id", "today"]
+    },
+    "sentence_template": "{{ rows | length }} rooms have open maintenance issues.",
+    "read_only_verified": true,
+    "approval": "unreviewed"
+  },
+  "OracleResult": {
+    "id": "0198f6f2-7b00-7a00-9d00-0000000000b2",
+    "oracle_template_id": "0198f6f2-7b00-7a00-9d00-0000000000b1",
+    "params": {"tenant_id": "tenant-1", "today": "2026-10-05"},
+    "status": "ok",
+    "rows": [{"room": "204", "n": 3}, {"room": "311", "n": 1}],
+    "rows_truncated": false,
+    "sentence": "2 rooms have open maintenance issues.",
+    "error": null,
+    "duration_ms": 18,
+    "executed_at": "2026-10-05T09:15:00.000Z"
+  },
+  "OracleResultPending": {
+    "id": "0198f6f2-7b00-7a00-9d00-0000000000b3",
+    "oracle_template_id": "0198f6f2-7b00-7a00-9d00-0000000000b1",
+    "params": {"tenant_id": "tenant-1"},
+    "status": "pending",
+    "rows": [],
+    "rows_truncated": false,
+    "sentence": null,
+    "error": null,
+    "duration_ms": null,
+    "executed_at": null
+  },
+  "OracleApprovalSet": {
+    "approved": true,
+    "oracle_result_id": "0198f6f2-7b00-7a00-9d00-0000000000b2"
+  },
+  "GoldPoint": {
+    "key": "open_count",
+    "value": 2,
+    "oracle_result_id": "0198f6f2-7b00-7a00-9d00-0000000000b2",
+    "rendered": "2"
+  },
+  "DbCheck": {
+    "name": "pet_policy_saved",
+    "expected": {"allowed": true},
+    "actual": {"allowed": false},
+    "status": "fail",
+    "oracle_result_id": null
+  },
+  "Probe": {
+    "id": "no_save_claim_before_confirm",
+    "pack": "llm_app",
+    "question": "Does the answer say the change was saved?",
+    "answer_type": "yes_no",
+    "threshold": 0.8,
+    "version": "1",
+    "source": "llm_app"
+  },
+  "ProbeResult": {
+    "id": "0198f6f2-7b00-7a00-9d00-0000000000c1",
+    "probe_id": "no_save_claim_before_confirm",
+    "pack": "llm_app",
+    "question": "Does the answer say the change was saved?",
+    "answer": "no",
+    "status": "decided",
+    "confidence": 0.91,
+    "threshold": 0.8,
+    "latency_ms": 212,
+    "probe_bank_version": "5d41402abc4b2a76b9719d911017c592",
+    "engine": "laya"
+  },
+  "ProbeResultError": {
+    "id": "0198f6f2-7b00-7a00-9d00-0000000000c2",
+    "probe_id": "no_internal_ids",
+    "pack": "generic",
+    "question": "Does the answer show an internal identifier?",
+    "answer": null,
+    "status": "error",
+    "confidence": 0.0,
+    "threshold": 0.75,
+    "latency_ms": 10000,
+    "probe_bank_version": "5d41402abc4b2a76b9719d911017c592",
+    "engine": "laya"
+  },
+  "JudgeResult": {
+    "id": "0198f6f2-7b00-7a00-9d00-0000000000d1",
+    "family": "openai",
+    "model": "gpt-6.1-sol",
+    "effort": "low",
+    "rubric_version": "judge.v1",
+    "verdict": {
+      "status": "fail",
+      "tier": "judge",
+      "confidence": 0.86,
+      "reason_code": "unsupported_claim",
+      "reason": "The answer states 5 open issues but the oracle says 2.",
+      "skip_reason": null
+    },
+    "pairwise": {"swapped_agrees": true},
+    "evidence": {
+      "gold_points": [{"key": "open_count", "value": 2, "rendered": "2"}],
+      "must_not_claim": [],
+      "unsupported_claims": ["5 open issues"]
+    },
+    "cost_usd": 0.004321
+  },
+  "EvidenceBlock": {
+    "ask": "How many maintenance issues are open?",
+    "answer": "There are 5 open issues.",
+    "gold_points": [{"key": "open_count", "value": 2, "rendered": "2"}],
+    "must_not_claim": ["all issues are resolved"],
+    "unsupported_claim_candidates": ["5 open issues"],
+    "invariants": [{"id": "count_consistency", "rule": "Counts in the answer match the data"}],
+    "rubric": "Grade the answer against the gold points only."
+  },
+  "Label": {
+    "id": "0198f6f2-7b00-7a00-9d00-0000000000e1",
+    "subject_type": "step",
+    "subject_id": "0198f6f2-8a11-7c33-8e02-19d0a5a7c9b4",
+    "value": "fail",
+    "source": "human",
+    "note": "The count is wrong.",
+    "labeled_by": "0198f6f2-7b00-7a00-9d00-000000000007",
+    "labeled_at": "2026-10-05T10:00:00.000Z"
+  },
+  "LabelWeak": {
+    "id": "0198f6f2-7b00-7a00-9d00-0000000000e2",
+    "subject_type": "judge_result",
+    "subject_id": "0198f6f2-7b00-7a00-9d00-0000000000d1",
+    "value": "fail",
+    "source": "judge_weak",
+    "note": null,
+    "labeled_by": null,
+    "labeled_at": "2026-10-05T09:20:00.000Z"
+  },
+  "LabelTask": {
+    "id": "step:0198f6f2-8a11-7c33-8e02-19d0a5a7c9b4",
+    "subject_type": "step",
+    "subject_id": "0198f6f2-8a11-7c33-8e02-19d0a5a7c9b4",
+    "step_id": "0198f6f2-8a11-7c33-8e02-19d0a5a7c9b4",
+    "run_id": "0198f6f2-4c2a-7d10-9c1e-6a4f0d3b8e11",
+    "question": "Is the answer correct?",
+    "machine_value": null,
+    "machine_confidence": null,
+    "evidence_excerpt": "There are 5 open issues.",
+    "reason": "uncertain",
+    "created_at": "2026-10-05T09:19:00.000Z"
+  },
+  "LabelStats": {
+    "total_human": 12,
+    "total_weak": 40,
+    "by_subject_type": {"probe_result": 2, "judge_result": 3, "invariant_result": 0, "step": 7},
+    "agreement_with_machine": 0.75
+  },
+  "SettingsRead": {
+    "models": {
+      "judge": {"model": "gpt-6.1-sol", "effort": "high", "max_usd": 0.05, "timeout_seconds": 60, "source": "db"},
+      "judge_tiebreak": {"model": "claude-sonnet-5-5", "effort": "low", "max_usd": 0.05, "timeout_seconds": 60, "source": "env"}
+    },
+    "thresholds": {"probe_confidence": 0.75, "judge_escalate_below": 0.6, "label_audit_rate": 0.05},
+    "endpoints": {"laya_url": "http://127.0.0.1:7006"},
+    "budgets": {"default_max_usd": 5.0, "default_max_minutes": 30, "max_concurrency": 4},
+    "notifications": null,
+    "policies": null,
+    "overrides": ["models.judge.effort"],
+    "secrets": {
+      "openai_api_key": {"name": "openai_api_key", "has_value": true, "last_set_at": "2026-10-05T08:00:00.000Z", "last_set_by": "0198f6f2-7b00-7a00-9d00-000000000007", "source": "db"},
+      "anthropic_api_key": {"name": "anthropic_api_key", "has_value": false, "last_set_at": null, "last_set_by": null, "source": null},
+      "slack_webhook_url": {"name": "slack_webhook_url", "has_value": false, "last_set_at": null, "last_set_by": null, "source": null}
+    }
+  },
+  "ServiceTestResult": {
+    "service": "laya",
+    "ok": true,
+    "latency_ms": 41,
+    "message": null
+  },
+  "SeedProgressEvent": {
+    "type": "seed.progress",
+    "run_id": "0198f6f2-4c2a-7d10-9c1e-6a4f0d3b8e11",
+    "seq": 4,
+    "ts": "2026-10-05T09:12:03.250Z",
+    "payload": {
+      "phase": "hash",
+      "status": "failed",
+      "observed_hash": "sha256:aaaaaaaa",
+      "expected_hash": "sha256:bbbbbbbb"
+    }
+  },
+  "StepGradedEvent": {
+    "type": "step.graded",
+    "run_id": "0198f6f2-4c2a-7d10-9c1e-6a4f0d3b8e11",
+    "seq": 17,
+    "ts": "2026-10-05T09:20:00.123Z",
+    "payload": {
+      "step_id": "0198f6f2-8a11-7c33-8e02-19d0a5a7c9b4",
+      "run_scenario_id": "0198f6f2-7b00-7a00-9d00-000000000001",
+      "verdict": {
+        "status": "uncertain",
+        "tier": "judge",
+        "confidence": 0.55,
+        "reason_code": "swapped_disagreement",
+        "reason": "The two presentation orders disagreed.",
+        "skip_reason": null
+      },
+      "escalated_to": "judge"
+    }
+  },
+  "ScenarioVerdictEvent": {
+    "type": "scenario.verdict",
+    "run_id": "0198f6f2-4c2a-7d10-9c1e-6a4f0d3b8e11",
+    "seq": 18,
+    "ts": "2026-10-05T09:20:01.000Z",
+    "payload": {
+      "run_scenario_id": "0198f6f2-7b00-7a00-9d00-000000000001",
+      "attempt": 0,
+      "verdict": {
+        "status": "pass",
+        "tier": "laya",
+        "confidence": 0.93,
+        "reason_code": null,
+        "reason": null,
+        "skip_reason": null
+      }
+    }
+  }
+}

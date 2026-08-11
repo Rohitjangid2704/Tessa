@@ -1,0 +1,7 @@
+schema: http://localhost:8000/schemas/bundle.v1.json
+target_token: tgt_missing234567abcdefghi
+app:
+  name: Half done
+  summary: A Discovery run that stopped after the app section.
+  kind: web
+  how_to_run: npm run dev

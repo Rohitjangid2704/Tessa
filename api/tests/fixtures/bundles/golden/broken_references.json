@@ -1,0 +1,46 @@
+{
+  "valid": false,
+  "errors": [
+    {
+      "code": "duplicate_id",
+      "severity": "error",
+      "file": "manifest.yaml",
+      "pointer": "/features/4/id",
+      "line": 171,
+      "column": 3
+    },
+    {
+      "code": "unknown_interface",
+      "severity": "error",
+      "file": "manifest.yaml",
+      "pointer": "/features/0/interfaces/2",
+      "line": 93,
+      "column": 5
+    },
+    {
+      "code": "unknown_role",
+      "severity": "error",
+      "file": "manifest.yaml",
+      "pointer": "/features/1/roles/0",
+      "line": 119,
+      "column": 5
+    },
+    {
+      "code": "unknown_flag",
+      "severity": "error",
+      "file": "manifest.yaml",
+      "pointer": "/features/2/flag",
+      "line": 153,
+      "column": 3
+    },
+    {
+      "code": "unknown_environment_variable",
+      "severity": "error",
+      "file": "manifest.yaml",
+      "pointer": "/roles/0/credential_env",
+      "line": 66,
+      "column": 3
+    }
+  ],
+  "warnings": []
+}

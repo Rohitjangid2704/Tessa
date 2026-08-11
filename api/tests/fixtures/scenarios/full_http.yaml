@@ -1,0 +1,68 @@
+schema_version: 1
+id: rooms-list-boundaries
+title: Rooms list respects roles
+feature_id: rooms.read.list
+family: rooms
+role: admin
+interface_id: admin_api
+timeout_seconds: 120
+cell:
+  role: admin
+  interface_id: admin_api
+authored_from: 0198f6f2-4c2a-7d10-9c1e-6a4f0d3b8e11
+synthetic: false
+steps:
+  - adapter: http
+    label: Admin reads the first page
+    request:
+      method: GET
+      path: /api/rooms
+      headers:
+        Authorization: Bearer ${ADMIN_TOKEN}
+        Accept: application/json
+      query:
+        limit: 5
+        status:
+          - open
+          - closed
+    expect:
+      status:
+        - 200
+      schema:
+        type: object
+        required:
+          - items
+      fields:
+        - path: items
+          type: array
+          min_length: 1
+        - path: items[0].number
+          matches: ^[0-9]{5}$
+        - path: $.total
+          gte: 1
+        - path: items[0].password_hash
+          exists: false
+        - path: next_cursor
+          type: "null"
+      latency:
+        max_ms: 2000
+      internal_ids: true
+      free_text: A page of rooms with a count
+  - adapter: http
+    as: anonymous
+    label: Anonymous is refused
+    request:
+      method: GET
+      path: /api/rooms
+    expect:
+      status: [401, 403]
+  - adapter: http
+    as: viewer
+    request:
+      method: POST
+      path: /api/rooms/${ROOM_ID}/notes
+      body:
+        text: hello
+    expect:
+      status: 403
+      internal_ids: false
