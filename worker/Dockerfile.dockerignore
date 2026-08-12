@@ -1,0 +1,15 @@
+*
+!api
+!worker
+!probes
+**/.venv
+**/__pycache__
+**/*.pyc
+**/.mypy_cache
+**/.ruff_cache
+**/.pytest_cache
+**/.env
+**/.env.test
+api/data
+api/tests
+worker/tests

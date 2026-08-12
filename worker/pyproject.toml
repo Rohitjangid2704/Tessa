@@ -1,0 +1,80 @@
+[project]
+name = "tessa-worker"
+version = "0.1.0"
+description = "Tessa worker: Temporal workflows and activities"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "tessa-api",
+    "temporalio>=1.8",
+    "httpx>=0.28",
+    "websockets>=14.0",
+    "playwright==1.63.0",
+    "jsonschema>=4.23",
+    "openai==3.24.0",
+    "anthropic==1.11.0",
+    "psutil==7.2.2",
+    "jinja2==3.1.6",
+    "prometheus-client==0.26.0",
+    "axe-playwright-python==0.1.8",
+    "schemathesis==4.29.3",
+    "graphql-core==3.2.13",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.25",
+    "respx>=0.22",
+    "ruff>=0.9",
+    "mypy>=1.14",
+    "types-pyyaml>=6.0",
+    "types-jsonschema>=4.23",
+    "hypothesis==6.168.4",
+    "types-psutil==7.2.2.20260906",
+]
+
+[tool.uv.sources]
+tessa-api = { path = "../api", editable = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["tessa_worker"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "B", "UP", "ASYNC", "SIM", "RUF", "PT", "C4"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["tessa_worker", "tessa_api"]
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+plugins = ["pydantic.mypy"]
+files = ["tessa_worker", "scripts", "tests"]
+explicit_package_bases = true
+
+[[tool.mypy.overrides]]
+module = ["asyncpg", "asyncpg.*"]
+ignore_missing_imports = true
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = "--strict-markers -ra"
+markers = [
+    "integration: needs the Postgres database or the Temporal test server",
+    "e2e: needs the API with Postgres, Temporal and the worker together",
+    "browser: needs a real Chromium started by the browser host",
+]
