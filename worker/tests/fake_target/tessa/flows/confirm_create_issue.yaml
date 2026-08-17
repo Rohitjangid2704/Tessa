@@ -1,0 +1,36 @@
+id: confirm_create_issue
+title: Ask for a maintenance issue and confirm it
+feature_ids: [maintenance.write.create_issue]
+role: staff
+steps:
+  - action: goto
+    url: /login
+  - action: fill
+    target:
+      role: textbox
+      name: Email
+    value: ${STAFF_EMAIL}
+  - action: fill
+    target:
+      selector: "[data-testid=password]"
+    value: ${STAFF_PASSWORD}
+  - action: click
+    target:
+      role: button
+      name: Sign in
+    expect:
+      url: /chat
+  - action: fill
+    target:
+      selector: "[data-testid=chat-input]"
+    value: Create a maintenance issue for room 20003, the shower leaks
+  - action: press
+    value: Enter
+    expect:
+      text: ["Please confirm"]
+  - action: click
+    target:
+      role: button
+      name: Confirm
+    expect:
+      text: [Issue created]

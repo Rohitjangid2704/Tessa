@@ -1,0 +1,215 @@
+schema: http://localhost:8000/schemas/bundle.v1.json
+target_token: tgt_fakefakefakefakefakefa
+app:
+  name: Fake Target
+  summary: >-
+    A tiny hotel assistant used to test Tessa. It answers questions about rooms and
+    maintenance issues from an in-memory dataset over a chat stream, serves the same data
+    over a small REST API, and has a login page and a chat page for a real browser.
+  kind: llm_assistant
+  how_to_run: uv run python -m tests.fake_target --port 8504
+  health_endpoints:
+    - GET /health
+  ports: [8504]
+  base_paths: [/api, /api/chat]
+interfaces:
+  - id: chat_sse
+    kind: sse
+    base_path: /api/chat
+    auth:
+      type: bearer
+      header: Authorization
+      token_source:
+        staff: POST /api/auth/login with ${STAFF_EMAIL} and ${STAFF_PASSWORD}
+        manager: ${MANAGER_TOKEN}
+        admin: ${ADMIN_TOKEN}
+    health_endpoint: /health
+    shapes:
+      - name: send chat message
+        method: POST
+        path: /message
+        request_example:
+          message: Which maintenance issues are still open?
+        response_example:
+          answer: 3 maintenance issues are open across 2 rooms, most of them in room 20003.
+    stream_events: [token, tool_call, card, done]
+    rate_limits: none
+    idempotency: none
+  - id: api
+    kind: http
+    base_path: /api
+    auth:
+      type: bearer
+      header: Authorization
+      token_source:
+        staff: POST /api/auth/login with ${STAFF_EMAIL} and ${STAFF_PASSWORD}
+        manager: ${MANAGER_TOKEN}
+        admin: ${ADMIN_TOKEN}
+    health_endpoint: /health
+    shapes:
+      - name: list rooms
+        method: GET
+        path: /rooms
+        response_example:
+          items:
+            - number: "20001"
+              status: clean
+              floor: 2
+          total: 8
+  - id: browser
+    kind: browser
+    base_path: /
+    health_endpoint: /health
+roles:
+  - id: staff
+    level: 1
+    description: Front desk and housekeeping staff
+    can_see: [rooms, maintenance issues]
+    can_do: [ask questions, create maintenance issues]
+    credential_env: STAFF_PASSWORD
+  - id: manager
+    level: 2
+    description: Property manager
+    can_see: [rooms, maintenance issues]
+    can_do: [everything staff can do]
+    credential_env: MANAGER_TOKEN
+  - id: admin
+    level: 3
+    description: Chain administrator
+    can_see: [rooms, maintenance issues, users]
+    can_do: [list users]
+    credential_env: ADMIN_TOKEN
+features:
+  - id: maintenance.read.open_issues
+    area: Maintenance
+    kind: read
+    description: List the maintenance issues that are still open and the rooms with the most
+    interfaces: [chat_sse, browser]
+    roles: [all]
+    examples:
+      - ask: Which maintenance issues are still open?
+        expected: 3 maintenance issues are open across 2 rooms, most of them in room 20003
+    invariants: [no_internal_ids]
+    confidence: high
+  - id: rooms.read.dirty
+    area: Rooms
+    kind: read
+    description: List the rooms that still need cleaning
+    interfaces: [chat_sse]
+    roles: [all]
+    examples:
+      - ask: Which rooms are dirty?
+        expected: 3 rooms are dirty, 20002, 20003 and 20005
+    invariants: [no_internal_ids]
+    confidence: high
+  - id: rooms.read.list
+    area: Rooms
+    kind: read
+    description: List the rooms with their status through the REST API
+    interfaces: [api]
+    roles: [all]
+    examples:
+      - request:
+          method: GET
+          path: /rooms
+        expected: A list of 8 rooms, 3 of them dirty
+    confidence: high
+  - id: maintenance.write.create_issue
+    area: Maintenance
+    kind: write
+    description: Create a maintenance issue for a room after the user confirms
+    interfaces: [chat_sse, browser]
+    roles: [staff, manager]
+    examples:
+      - ask: Create a maintenance issue for room 20003, the shower leaks
+        expected: The assistant asks for confirmation and does not claim the issue exists yet
+    invariants: [no_claim_before_confirmation]
+    cleanup: restore the dataset with POST /qa/reset
+    confidence: medium
+    writes_to: maintenance_issue
+    confirmation: button
+  - id: auth.login.staff
+    area: Auth
+    kind: auth
+    description: A staff member signs in with email and password
+    interfaces: [browser, api]
+    roles: [staff]
+    examples:
+      - request:
+          method: POST
+          path: /auth/login
+        expected: A bearer token that unlocks the chat and the REST API
+    invariants: [auth_boundary]
+    confidence: high
+  - id: admin.users.list
+    area: Admin
+    kind: admin
+    description: Administrators list the users
+    interfaces: [api]
+    roles: [admin]
+    examples:
+      - request:
+          method: GET
+          path: /admin/users
+        expected: The 3 users with their roles and never a password
+    invariants: [auth_boundary]
+    confidence: medium
+invariants:
+  - id: no_internal_ids
+    rule: Answers and API payloads never contain internal ids or session tokens
+    check: code
+    internal_id_patterns:
+      - '\bfake-session-[0-9a-f]{32}\b'
+  - id: no_claim_before_confirmation
+    rule: The assistant never says a write happened before the confirmation
+    check: probe
+  - id: auth_boundary
+    rule: A role never sees data above its level
+    check: code
+seeds:
+  description: An in-memory dataset of 8 rooms and 5 maintenance issues, restored by POST /qa/reset
+  reset_script: seeds/reset.sh
+  hash_command: bash seeds/hash.sh
+environment:
+  - name: FAKE_TARGET_URL
+    kind: url
+    secret: false
+    required: true
+    purpose: Base URL of the fake target
+    interfaces: [chat_sse, api, browser]
+  - name: STAFF_EMAIL
+    kind: string
+    secret: false
+    required: true
+    purpose: Login email of the staff user
+    interfaces: [chat_sse, api, browser]
+  - name: STAFF_PASSWORD
+    kind: password
+    secret: true
+    required: true
+    purpose: Password of the staff user
+    interfaces: [chat_sse, api, browser]
+  - name: MANAGER_TOKEN
+    kind: token
+    secret: true
+    required: true
+    purpose: API token of the manager
+    interfaces: [chat_sse, api]
+  - name: ADMIN_TOKEN
+    kind: token
+    secret: true
+    required: true
+    purpose: API token of the admin
+    interfaces: [chat_sse, api]
+test_hooks:
+  available:
+    - id: health
+      description: Health probe
+      endpoint: GET /health
+    - id: reset
+      description: Restore the seeded dataset
+      endpoint: POST /qa/reset
+limitations:
+  - Only the staff account can sign in through the login page
+cleanup:
+  delete_after_run: [maintenance issues created by the suite]
