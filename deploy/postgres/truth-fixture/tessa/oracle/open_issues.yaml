@@ -1,0 +1,16 @@
+name: open_issues
+feature_ids: [maintenance.read.open_issues]
+language: sql
+truth_source: primary_db
+params_schema:
+  type: object
+  properties: {}
+sentence_template: >-
+  {{ rows | length }} rooms have open maintenance issues, most of them room {{ rows[0].room }}
+  with {{ rows[0].open_issues }}.
+gold_points:
+  - key: open_rooms
+    expression: rows | length
+    template: "{{ value }} rooms"
+  - key: top_room
+    expression: rows[0].room

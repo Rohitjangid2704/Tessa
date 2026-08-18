@@ -1,0 +1,13 @@
+name: dirty_rooms
+feature_ids: [rooms.read.dirty]
+language: sql
+truth_source: primary_db
+params_schema:
+  type: object
+  properties: {}
+sentence_template: >-
+  {{ rows | length }} rooms are dirty: {{ rows | map(attribute='room') | join(', ') }}.
+gold_points:
+  - key: dirty_count
+    expression: rows | length
+    template: "{{ value }} rooms"

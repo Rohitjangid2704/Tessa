@@ -1,0 +1,154 @@
+schema: http://localhost:8000/schemas/bundle.v1.json
+target_token: tgt_fixtureaaaaaaaaaaaaaaa
+app:
+  name: Truth Fixture Hotel
+  summary: >-
+    A tiny hotel assistant whose answers come from the truth_fixture Postgres database: rooms
+    and maintenance issues. It exists so seeds, oracles and end-state checks can be tried
+    against a real database.
+  kind: llm_assistant
+  how_to_run: cd worker && uv run python -m tests.fake_target --port 8507
+  health_endpoints:
+    - GET /health
+  ports: [8507]
+  base_paths: [/api, /api/chat]
+interfaces:
+  - id: chat_sse
+    kind: sse
+    base_path: /api/chat
+    auth:
+      type: bearer
+      header: Authorization
+      token_source:
+        staff: ${STAFF_TOKEN}
+    health_endpoint: /health
+    shapes:
+      - name: send chat message
+        method: POST
+        path: /message
+        request_example:
+          message: Which maintenance issues are still open?
+        response_example:
+          answer: 3 maintenance issues are open across 2 rooms, most of them in room 20003.
+    stream_events: [token, tool_call, card, done]
+  - id: api
+    kind: http
+    base_path: /api
+    auth:
+      type: bearer
+      header: Authorization
+      token_source:
+        staff: ${STAFF_TOKEN}
+    health_endpoint: /health
+    shapes:
+      - name: list rooms
+        method: GET
+        path: /rooms
+        response_example:
+          items:
+            - number: "20001"
+              status: clean
+              floor: 2
+          total: 8
+roles:
+  - id: staff
+    level: 1
+    description: Front desk and housekeeping staff
+    can_see: [rooms, maintenance issues]
+    can_do: [ask questions]
+    credential_env: STAFF_TOKEN
+features:
+  - id: maintenance.read.open_issues
+    area: Maintenance
+    kind: read
+    description: List the maintenance issues that are still open and the rooms with the most
+    interfaces: [chat_sse]
+    roles: [all]
+    examples:
+      - ask: Which maintenance issues are still open?
+        expected: The count of open issues and the room with the most, from the oracle
+        oracle: open_issues
+    invariants: [no_internal_ids]
+    confidence: high
+  - id: rooms.read.dirty
+    area: Rooms
+    kind: read
+    description: List the rooms that still need cleaning
+    interfaces: [chat_sse]
+    roles: [all]
+    examples:
+      - ask: Which rooms are dirty?
+        expected: The dirty rooms, from the oracle
+        oracle: dirty_rooms
+    invariants: [no_internal_ids]
+    confidence: high
+  - id: rooms.read.list
+    area: Rooms
+    kind: read
+    description: List the rooms with their status through the REST API
+    interfaces: [api]
+    roles: [all]
+    examples:
+      - request:
+          method: GET
+          path: /rooms
+        expected: A list of 8 rooms, 3 of them dirty
+    confidence: high
+data_model:
+  stores:
+    - name: primary
+      kind: postgres
+      entities:
+        - name: rooms
+          key_fields: [id, number]
+          status_fields: [status]
+        - name: issues
+          key_fields: [id, room_id]
+          status_fields: [status]
+truth_sources:
+  - id: primary_db
+    kind: database
+    description: The truth_fixture database through the read-only role truth_ro
+    connection_env: TRUTH_DB_DSN
+    dialect: postgres
+seeds:
+  description: Eight rooms and five maintenance issues, restored by seeds/reset.sql
+  reset_script: seeds/reset.sql
+  hash_command: python seeds/hash.py
+  dsn_env: SEED_DB_DSN
+invariants:
+  - id: no_internal_ids
+    rule: Answers and API payloads never contain internal database ids
+    check: code
+environment:
+  - name: FIXTURE_URL
+    kind: url
+    secret: false
+    required: true
+    purpose: Base URL of the app that answers from the fixture database
+    interfaces: [chat_sse, api]
+  - name: STAFF_TOKEN
+    kind: token
+    secret: true
+    required: true
+    purpose: API token of the staff role
+    interfaces: [chat_sse, api]
+  - name: TRUTH_DB_DSN
+    kind: dsn
+    secret: true
+    required: false
+    purpose: Read-only connection to the truth_fixture database
+  - name: SEED_DB_DSN
+    kind: dsn
+    secret: true
+    required: false
+    purpose: Write connection used by the seed reset script
+test_hooks:
+  available:
+    - id: health
+      description: Health probe
+      endpoint: GET /health
+limitations:
+  - The app is a test double, not a real product
+cleanup:
+  delete_after_run: [issues created by the suite]

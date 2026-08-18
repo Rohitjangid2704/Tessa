@@ -1,0 +1,151 @@
+name: tessa
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT}:5432"
+    volumes:
+      - tessa-postgres:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  temporal:
+    image: temporalio/temporal:1.9.1
+    profiles: [temporal]
+    command:
+      - server
+      - start-dev
+      - --ip
+      - 0.0.0.0
+      - --port
+      - "7233"
+      - --ui-ip
+      - 0.0.0.0
+      - --ui-port
+      - "8233"
+      - --db-filename
+      - /home/temporal/temporal.db
+    ports:
+      - "127.0.0.1:${TEMPORAL_PORT}:7233"
+      - "127.0.0.1:${TEMPORAL_UI_PORT}:8233"
+    volumes:
+      - tessa-temporal:/home/temporal
+    healthcheck:
+      test: ["CMD", "temporal", "operator", "cluster", "health", "--address", "127.0.0.1:7233"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+  api:
+    image: tessa-api:dev
+    profiles: [apps]
+    build:
+      context: ..
+      dockerfile: api/Dockerfile
+    env_file:
+      - path: ../api/.env
+        required: false
+    environment:
+      TESSA_DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      TESSA_TEMPORAL_ADDRESS: temporal:7233
+      TESSA_LAYA_URL: http://host.docker.internal:7006
+      TESSA_DATA_DIR: /data
+      TESSA_STUB_MODELS: "false"
+      TESSA_METRICS_ENABLED: "false"
+      TESSA_REPORT_BASE_URL: http://localhost:3000
+      TESSA_FLAKY_QUARANTINE_AFTER: "3"
+      TESSA_COMMIT_TIER_MAX_MINUTES: "10"
+      TESSA_CALIBRATION_MIN_LABELS: "30"
+      TESSA_RETENTION_STEPS_DAYS: "90"
+      TESSA_RETENTION_RUN_EVENTS_DAYS: "30"
+      TESSA_PERSONAL_TOKEN_MAX_DAYS: "90"
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - tessa-data:/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      temporal:
+        condition: service_healthy
+        required: false
+
+  worker:
+    image: tessa-worker:dev
+    profiles: [apps]
+    build:
+      context: ..
+      dockerfile: worker/Dockerfile
+    env_file:
+      - path: ../worker/.env
+        required: false
+    environment:
+      TESSA_DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      TESSA_TEMPORAL_ADDRESS: temporal:7233
+      TESSA_API_INTERNAL_URL: http://api:8000
+      TESSA_LAYA_URL: http://host.docker.internal:7006
+      TESSA_DATA_DIR: /data
+      TESSA_BROWSER_HEADLESS: "true"
+      TESSA_STUB_MODELS: "false"
+      TESSA_METRICS_ENABLED: "false"
+      TESSA_METRICS_PORT: "9100"
+      TESSA_VERIFY_REPLAYS: "2"
+      TESSA_REPORT_BASE_URL: http://localhost:3000
+      TESSA_FLAKY_QUARANTINE_AFTER: "3"
+      TESSA_MUTATION_BASELINE_MAX_AGE_HOURS: "24"
+      TESSA_WS_ADAPTER_MAX_MESSAGES: "200"
+      TESSA_RETENTION_STEPS_DAYS: "90"
+      TESSA_RETENTION_RUN_EVENTS_DAYS: "30"
+    ports:
+      - "127.0.0.1:9100:9100"
+    init: true
+    shm_size: 1gb
+    volumes:
+      - tessa-data:/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      temporal:
+        condition: service_healthy
+        required: false
+
+  web:
+    image: tessa-web:dev
+    profiles: [web]
+    build:
+      context: ../client
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8000
+        NEXT_PUBLIC_PLUGIN_SOURCE: ""
+    env_file:
+      - path: ../client/.env.local
+        required: false
+    environment:
+      API_INTERNAL_URL: http://api:8000
+      AUTH_TRUST_HOST: "true"
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+        required: false
+
+volumes:
+  tessa-postgres:
+  tessa-temporal:
+  tessa-data:
