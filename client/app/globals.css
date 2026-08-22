@@ -1,0 +1,435 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-heading: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+  --color-verdict-pass-bg: var(--verdict-pass-bg);
+  --color-verdict-pass-fg: var(--verdict-pass-fg);
+  --color-verdict-fail-bg: var(--verdict-fail-bg);
+  --color-verdict-fail-fg: var(--verdict-fail-fg);
+  --color-verdict-flaky-bg: var(--verdict-flaky-bg);
+  --color-verdict-flaky-fg: var(--verdict-flaky-fg);
+  --color-verdict-uncertain-bg: var(--verdict-uncertain-bg);
+  --color-verdict-uncertain-fg: var(--verdict-uncertain-fg);
+  --color-verdict-skipped-bg: var(--verdict-skipped-bg);
+  --color-verdict-skipped-fg: var(--verdict-skipped-fg);
+  --color-severity-critical-bg: var(--severity-critical-bg);
+  --color-severity-critical-fg: var(--severity-critical-fg);
+  --color-severity-critical-solid: var(--severity-critical-solid);
+  --color-severity-critical-solid-fg: var(--severity-critical-solid-fg);
+  --color-severity-high-bg: var(--severity-high-bg);
+  --color-severity-high-fg: var(--severity-high-fg);
+  --color-severity-medium-bg: var(--severity-medium-bg);
+  --color-severity-medium-fg: var(--severity-medium-fg);
+  --color-severity-low-bg: var(--severity-low-bg);
+  --color-severity-low-fg: var(--severity-low-fg);
+  --color-severity-info-bg: var(--severity-info-bg);
+  --color-severity-info-fg: var(--severity-info-fg);
+  --color-tier-code-bg: var(--tier-code-bg);
+  --color-tier-code-fg: var(--tier-code-fg);
+  --color-tier-laya-bg: var(--tier-laya-bg);
+  --color-tier-laya-fg: var(--tier-laya-fg);
+  --color-tier-judge-bg: var(--tier-judge-bg);
+  --color-tier-judge-fg: var(--tier-judge-fg);
+  --color-tier-human-bg: var(--tier-human-bg);
+  --color-tier-human-fg: var(--tier-human-fg);
+  --color-tier-production-bg: var(--tier-production-bg);
+  --color-tier-production-fg: var(--tier-production-fg);
+  --color-tier-production-solid: var(--tier-production-solid);
+  --color-tier-production-solid-fg: var(--tier-production-solid-fg);
+  --color-live-live-bg: var(--live-live-bg);
+  --color-live-live-fg: var(--live-live-fg);
+  --color-live-reconnecting-bg: var(--live-reconnecting-bg);
+  --color-live-reconnecting-fg: var(--live-reconnecting-fg);
+  --color-live-closed-bg: var(--live-closed-bg);
+  --color-live-closed-fg: var(--live-closed-fg);
+  --color-live-error-bg: var(--live-error-bg);
+  --color-live-error-fg: var(--live-error-fg);
+  --color-cell-empty-bg: var(--cell-empty-bg);
+  --color-cell-empty-fg: var(--cell-empty-fg);
+  --color-cell-generated-bg: var(--cell-generated-bg);
+  --color-cell-generated-fg: var(--cell-generated-fg);
+  --color-cell-covered-bg: var(--cell-covered-bg);
+  --color-cell-covered-fg: var(--cell-covered-fg);
+  --color-cell-needs-author-bg: var(--cell-needs-author-bg);
+  --color-cell-needs-author-fg: var(--cell-needs-author-fg);
+  --color-cell-blocked-bg: var(--cell-blocked-bg);
+  --color-cell-blocked-fg: var(--cell-blocked-fg);
+  --color-finding-new-bg: var(--finding-new-bg);
+  --color-finding-new-fg: var(--finding-new-fg);
+  --color-finding-triaged-bg: var(--finding-triaged-bg);
+  --color-finding-triaged-fg: var(--finding-triaged-fg);
+  --color-finding-in-fix-bg: var(--finding-in-fix-bg);
+  --color-finding-in-fix-fg: var(--finding-in-fix-fg);
+  --color-finding-verifying-bg: var(--finding-verifying-bg);
+  --color-finding-verifying-fg: var(--finding-verifying-fg);
+  --color-finding-resolved-bg: var(--finding-resolved-bg);
+  --color-finding-resolved-fg: var(--finding-resolved-fg);
+  --color-finding-known-gap-bg: var(--finding-known-gap-bg);
+  --color-finding-known-gap-fg: var(--finding-known-gap-fg);
+  --color-finding-dismissed-bg: var(--finding-dismissed-bg);
+  --color-finding-dismissed-fg: var(--finding-dismissed-fg);
+  --color-attack-blocked-bg: var(--attack-blocked-bg);
+  --color-attack-blocked-fg: var(--attack-blocked-fg);
+  --color-attack-breached-bg: var(--attack-breached-bg);
+  --color-attack-breached-fg: var(--attack-breached-fg);
+  --color-attack-inconclusive-bg: var(--attack-inconclusive-bg);
+  --color-attack-inconclusive-fg: var(--attack-inconclusive-fg);
+  --color-proposed-bg: var(--proposed-bg);
+  --color-proposed-fg: var(--proposed-fg);
+  --color-kpi-good-bg: var(--kpi-good-bg);
+  --color-kpi-good-fg: var(--kpi-good-fg);
+  --color-kpi-warn-bg: var(--kpi-warn-bg);
+  --color-kpi-warn-fg: var(--kpi-warn-fg);
+  --color-kpi-bad-bg: var(--kpi-bad-bg);
+  --color-kpi-bad-fg: var(--kpi-bad-fg);
+}
+
+:root {
+  color-scheme: light;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.5 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.53 0.21 27);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.5 0.117 250);
+  --chart-2: oklch(0.5 0.114 150);
+  --chart-3: oklch(0.5 0.098 60);
+  --chart-4: oklch(0.5 0.15 300);
+  --chart-5: oklch(0.5 0.15 25);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+  --verdict-pass-fg: oklch(0.45 0.114 150);
+  --verdict-pass-bg: oklch(0.95 0.04 150);
+  --verdict-fail-fg: oklch(0.45 0.15 25);
+  --verdict-fail-bg: oklch(0.95 0.022 25);
+  --verdict-flaky-fg: oklch(0.45 0.098 60);
+  --verdict-flaky-bg: oklch(0.95 0.028 60);
+  --verdict-uncertain-fg: oklch(0.45 0.15 300);
+  --verdict-uncertain-bg: oklch(0.95 0.025 300);
+  --verdict-skipped-fg: oklch(0.45 0.02 250);
+  --verdict-skipped-bg: oklch(0.95 0.008 250);
+  --severity-critical-fg: oklch(0.45 0.15 20);
+  --severity-critical-bg: oklch(0.95 0.022 20);
+  --severity-critical-solid: oklch(0.5 0.19 20);
+  --severity-critical-solid-fg: oklch(0.99 0 0);
+  --severity-high-fg: oklch(0.45 0.119 45);
+  --severity-high-bg: oklch(0.95 0.024 45);
+  --severity-medium-fg: oklch(0.45 0.085 85);
+  --severity-medium-bg: oklch(0.95 0.04 85);
+  --severity-low-fg: oklch(0.45 0.095 240);
+  --severity-low-bg: oklch(0.95 0.024 240);
+  --severity-info-fg: oklch(0.45 0.02 250);
+  --severity-info-bg: oklch(0.95 0.008 250);
+  --tier-code-fg: oklch(0.45 0.117 250);
+  --tier-code-bg: oklch(0.95 0.022 250);
+  --tier-laya-fg: oklch(0.45 0.07 195);
+  --tier-laya-bg: oklch(0.95 0.04 195);
+  --tier-judge-fg: oklch(0.45 0.15 275);
+  --tier-judge-bg: oklch(0.95 0.021 275);
+  --tier-human-fg: oklch(0.45 0.15 340);
+  --tier-human-bg: oklch(0.95 0.03 340);
+  --tier-production: oklch(0.5 0.15 40);
+  --tier-production-fg: oklch(0.42 0.12 45);
+  --tier-production-bg: oklch(0.95 0.04 60);
+  --tier-production-solid: var(--tier-production);
+  --tier-production-solid-fg: oklch(0.99 0 0);
+  --live-live-fg: oklch(0.45 0.114 150);
+  --live-live-bg: oklch(0.95 0.04 150);
+  --live-reconnecting-fg: oklch(0.45 0.085 85);
+  --live-reconnecting-bg: oklch(0.95 0.04 85);
+  --live-closed-fg: oklch(0.45 0.02 250);
+  --live-closed-bg: oklch(0.95 0.008 250);
+  --live-error-fg: oklch(0.45 0.15 25);
+  --live-error-bg: oklch(0.95 0.022 25);
+  --cell-empty-fg: oklch(0.45 0.02 250);
+  --cell-empty-bg: oklch(0.95 0.008 250);
+  --cell-generated-fg: oklch(0.45 0.117 250);
+  --cell-generated-bg: oklch(0.95 0.022 250);
+  --cell-covered-fg: oklch(0.45 0.114 150);
+  --cell-covered-bg: oklch(0.95 0.04 150);
+  --cell-needs-author-fg: oklch(0.45 0.15 340);
+  --cell-needs-author-bg: oklch(0.95 0.03 340);
+  --cell-blocked-fg: oklch(0.45 0.119 45);
+  --cell-blocked-bg: oklch(0.95 0.024 45);
+  --finding-new-fg: oklch(0.45 0.117 250);
+  --finding-new-bg: oklch(0.95 0.022 250);
+  --finding-triaged-fg: oklch(0.45 0.15 300);
+  --finding-triaged-bg: oklch(0.95 0.025 300);
+  --finding-in-fix-fg: oklch(0.45 0.098 60);
+  --finding-in-fix-bg: oklch(0.95 0.028 60);
+  --finding-verifying-fg: oklch(0.45 0.07 195);
+  --finding-verifying-bg: oklch(0.95 0.04 195);
+  --finding-resolved-fg: oklch(0.45 0.114 150);
+  --finding-resolved-bg: oklch(0.95 0.04 150);
+  --finding-known-gap-fg: oklch(0.45 0.085 85);
+  --finding-known-gap-bg: oklch(0.95 0.04 85);
+  --finding-dismissed-fg: oklch(0.45 0.02 250);
+  --finding-dismissed-bg: oklch(0.95 0.008 250);
+  --attack-blocked-fg: oklch(0.45 0.07 195);
+  --attack-blocked-bg: oklch(0.95 0.04 195);
+  --attack-breached-fg: oklch(0.45 0.15 25);
+  --attack-breached-bg: oklch(0.95 0.022 25);
+  --attack-inconclusive-fg: oklch(0.45 0.085 85);
+  --attack-inconclusive-bg: oklch(0.95 0.04 85);
+  --proposed-fg: oklch(0.45 0.15 295);
+  --proposed-bg: oklch(0.95 0.022 295);
+  --kpi-good-fg: oklch(0.45 0.114 150);
+  --kpi-good-bg: oklch(0.95 0.04 150);
+  --kpi-warn-fg: oklch(0.45 0.085 85);
+  --kpi-warn-bg: oklch(0.95 0.04 85);
+  --kpi-bad-fg: oklch(0.45 0.15 25);
+  --kpi-bad-bg: oklch(0.95 0.022 25);
+}
+
+.dark {
+  color-scheme: dark;
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.78 0.12 22);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.8 0.094 250);
+  --chart-2: oklch(0.8 0.14 150);
+  --chart-3: oklch(0.8 0.126 60);
+  --chart-4: oklch(0.8 0.107 300);
+  --chart-5: oklch(0.8 0.103 25);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+  --verdict-pass-fg: oklch(0.8 0.14 150);
+  --verdict-pass-bg: oklch(0.28 0.06 150);
+  --verdict-fail-fg: oklch(0.8 0.103 25);
+  --verdict-fail-bg: oklch(0.28 0.06 25);
+  --verdict-flaky-fg: oklch(0.8 0.126 60);
+  --verdict-flaky-bg: oklch(0.28 0.06 60);
+  --verdict-uncertain-fg: oklch(0.8 0.107 300);
+  --verdict-uncertain-bg: oklch(0.28 0.06 300);
+  --verdict-skipped-fg: oklch(0.8 0.02 250);
+  --verdict-skipped-bg: oklch(0.28 0.012 250);
+  --severity-critical-fg: oklch(0.8 0.103 20);
+  --severity-critical-bg: oklch(0.28 0.06 20);
+  --severity-critical-solid: oklch(0.55 0.19 20);
+  --severity-critical-solid-fg: oklch(0.99 0 0);
+  --severity-high-fg: oklch(0.8 0.11 45);
+  --severity-high-bg: oklch(0.28 0.06 45);
+  --severity-medium-fg: oklch(0.8 0.14 85);
+  --severity-medium-bg: oklch(0.28 0.058 85);
+  --severity-low-fg: oklch(0.8 0.101 240);
+  --severity-low-bg: oklch(0.28 0.06 240);
+  --severity-info-fg: oklch(0.8 0.02 250);
+  --severity-info-bg: oklch(0.28 0.012 250);
+  --tier-code-fg: oklch(0.8 0.094 250);
+  --tier-code-bg: oklch(0.28 0.06 250);
+  --tier-laya-fg: oklch(0.8 0.123 195);
+  --tier-laya-bg: oklch(0.28 0.047 195);
+  --tier-judge-fg: oklch(0.8 0.091 275);
+  --tier-judge-bg: oklch(0.28 0.06 275);
+  --tier-human-fg: oklch(0.8 0.14 340);
+  --tier-human-bg: oklch(0.28 0.06 340);
+  --tier-production: oklch(0.55 0.15 40);
+  --tier-production-fg: oklch(0.85 0.12 70);
+  --tier-production-bg: oklch(0.28 0.06 50);
+  --tier-production-solid: var(--tier-production);
+  --tier-production-solid-fg: oklch(0.99 0 0);
+  --live-live-fg: oklch(0.8 0.14 150);
+  --live-live-bg: oklch(0.28 0.06 150);
+  --live-reconnecting-fg: oklch(0.8 0.14 85);
+  --live-reconnecting-bg: oklch(0.28 0.058 85);
+  --live-closed-fg: oklch(0.8 0.02 250);
+  --live-closed-bg: oklch(0.28 0.012 250);
+  --live-error-fg: oklch(0.8 0.103 25);
+  --live-error-bg: oklch(0.28 0.06 25);
+  --cell-empty-fg: oklch(0.8 0.02 250);
+  --cell-empty-bg: oklch(0.28 0.012 250);
+  --cell-generated-fg: oklch(0.8 0.094 250);
+  --cell-generated-bg: oklch(0.28 0.06 250);
+  --cell-covered-fg: oklch(0.8 0.14 150);
+  --cell-covered-bg: oklch(0.28 0.06 150);
+  --cell-needs-author-fg: oklch(0.8 0.14 340);
+  --cell-needs-author-bg: oklch(0.28 0.06 340);
+  --cell-blocked-fg: oklch(0.8 0.11 45);
+  --cell-blocked-bg: oklch(0.28 0.06 45);
+  --finding-new-fg: oklch(0.8 0.094 250);
+  --finding-new-bg: oklch(0.28 0.06 250);
+  --finding-triaged-fg: oklch(0.8 0.107 300);
+  --finding-triaged-bg: oklch(0.28 0.06 300);
+  --finding-in-fix-fg: oklch(0.8 0.126 60);
+  --finding-in-fix-bg: oklch(0.28 0.06 60);
+  --finding-verifying-fg: oklch(0.8 0.123 195);
+  --finding-verifying-bg: oklch(0.28 0.047 195);
+  --finding-resolved-fg: oklch(0.8 0.14 150);
+  --finding-resolved-bg: oklch(0.28 0.06 150);
+  --finding-known-gap-fg: oklch(0.8 0.14 85);
+  --finding-known-gap-bg: oklch(0.28 0.058 85);
+  --finding-dismissed-fg: oklch(0.8 0.02 250);
+  --finding-dismissed-bg: oklch(0.28 0.012 250);
+  --attack-blocked-fg: oklch(0.8 0.123 195);
+  --attack-blocked-bg: oklch(0.28 0.047 195);
+  --attack-breached-fg: oklch(0.8 0.103 25);
+  --attack-breached-bg: oklch(0.28 0.06 25);
+  --attack-inconclusive-fg: oklch(0.8 0.14 85);
+  --attack-inconclusive-bg: oklch(0.28 0.058 85);
+  --proposed-fg: oklch(0.8 0.09 295);
+  --proposed-bg: oklch(0.28 0.06 295);
+  --kpi-good-fg: oklch(0.8 0.14 150);
+  --kpi-good-bg: oklch(0.28 0.06 150);
+  --kpi-warn-fg: oklch(0.8 0.14 85);
+  --kpi-warn-bg: oklch(0.28 0.058 85);
+  --kpi-bad-fg: oklch(0.8 0.103 25);
+  --kpi-bad-bg: oklch(0.28 0.06 25);
+}
+
+@utility hatched {
+  background-image: repeating-linear-gradient(
+    135deg,
+    color-mix(in oklch, currentColor 18%, transparent) 0 2px,
+    transparent 2px 6px
+  );
+}
+
+@utility cell-pattern-generated {
+  background-image: radial-gradient(
+    color-mix(in oklch, var(--cell-generated-fg) 40%, transparent) 1px,
+    transparent 1.6px
+  );
+  background-size: 7px 7px;
+}
+
+@utility cell-pattern-needs-author {
+  background-image: repeating-linear-gradient(
+    45deg,
+    color-mix(in oklch, var(--cell-needs-author-fg) 30%, transparent) 0 1.5px,
+    transparent 1.5px 8px
+  );
+}
+
+@utility cell-pattern-blocked {
+  background-image:
+    repeating-linear-gradient(
+      135deg,
+      color-mix(in oklch, var(--cell-blocked-fg) 32%, transparent) 0 2px,
+      transparent 2px 7px
+    ),
+    repeating-linear-gradient(
+      45deg,
+      color-mix(in oklch, var(--cell-blocked-fg) 32%, transparent) 0 2px,
+      transparent 2px 7px
+    );
+}
+
+@layer components {
+  .cell-flash-overlay {
+    background-color: color-mix(in oklch, var(--foreground) 24%, transparent);
+    animation: cell-flash 1.4s ease-out forwards;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cell-flash-overlay {
+      animation: none;
+      opacity: 0;
+    }
+  }
+}
+
+@keyframes cell-flash {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}
