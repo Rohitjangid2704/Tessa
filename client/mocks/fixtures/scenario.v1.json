@@ -1,0 +1,2609 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "scenario.v1.json",
+  "title": "Tessa scenario",
+  "description": "One scripted test of a feature, run by Tessa as one role on one interface: an ordered list of steps, each with the expectations Tessa checks in code.",
+  "$defs": {
+    "BrowserExpect": {
+      "additionalProperties": false,
+      "description": "What the page must look like after a browser step.",
+      "properties": {
+        "dom_state": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DomStateExpect"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "What the page must show.",
+          "examples": [
+            {
+              "text_contains": [
+                "Rooms"
+              ],
+              "url": "/rooms"
+            }
+          ],
+          "title": "Page state",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Page state",
+            "order": 1,
+            "widget": "yaml"
+          }
+        },
+        "console": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ConsoleExpect"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Which console messages fail the step.",
+          "examples": [
+            {
+              "fail_on": [
+                "error"
+              ]
+            }
+          ],
+          "title": "Console",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Console",
+            "order": 2,
+            "widget": "yaml"
+          }
+        },
+        "free_text": {
+          "anyOf": [
+            {
+              "maxLength": 4000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "What the page should show, in words, kept for model grading in a later stage.",
+          "examples": [
+            "The issue appears in the list"
+          ],
+          "title": "Free text",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Free text",
+            "order": 3,
+            "widget": "textarea"
+          }
+        }
+      },
+      "title": "Browser expectations",
+      "type": "object"
+    },
+    "BrowserStep": {
+      "additionalProperties": false,
+      "description": "One action in a real browser page and what the page must show after it.",
+      "properties": {
+        "label": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Short description shown in the step list; a default is derived when absent.",
+          "examples": [
+            "List open maintenance issues"
+          ],
+          "title": "Label",
+          "x-ui": {
+            "group": "Step",
+            "label": "Label",
+            "order": 1,
+            "widget": "text"
+          }
+        },
+        "as": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Run this step under another identity: anonymous or a role id. Absent uses the scenario role.",
+          "examples": [
+            "anonymous"
+          ],
+          "title": "As",
+          "x-ui": {
+            "group": "Step",
+            "label": "As",
+            "order": 2,
+            "widget": "text"
+          }
+        },
+        "gold_from": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/GoldFrom"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Oracle to run before the step; its gold points feed ${gold.<key>} references in text_contains, fields and expect_db.expect.",
+          "examples": [
+            {
+              "oracle": "open_maintenance"
+            }
+          ],
+          "title": "Gold from",
+          "x-ui": {
+            "group": "Step",
+            "label": "Gold from",
+            "order": 20,
+            "widget": "yaml"
+          }
+        },
+        "expect_db": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ExpectDb"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Oracle check run after the step against the truth database.",
+          "examples": [
+            {
+              "expect": {
+                "row_count": 1
+              },
+              "oracle": "issue_by_title",
+              "retry_for_seconds": 5
+            }
+          ],
+          "title": "Expect database",
+          "x-ui": {
+            "group": "Step",
+            "label": "Expect database",
+            "order": 21,
+            "widget": "yaml"
+          }
+        },
+        "adapter": {
+          "const": "browser",
+          "description": "Step kind.",
+          "examples": [
+            "browser"
+          ],
+          "title": "Adapter",
+          "type": "string",
+          "x-ui": {
+            "group": "Step",
+            "label": "Adapter",
+            "order": 3,
+            "widget": "select"
+          }
+        },
+        "action": {
+          "description": "goto opens url; click, check and hover act on target; fill and select act on target with value; press sends the key in value; wait_for only waits for expect to hold.",
+          "enum": [
+            "goto",
+            "click",
+            "fill",
+            "press",
+            "select",
+            "check",
+            "hover",
+            "wait_for"
+          ],
+          "examples": [
+            "click"
+          ],
+          "title": "Action",
+          "type": "string",
+          "x-ui": {
+            "group": "Step",
+            "label": "Action",
+            "order": 4,
+            "widget": "select"
+          }
+        },
+        "url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Path or address to open, for goto.",
+          "examples": [
+            "/login"
+          ],
+          "title": "URL",
+          "x-ui": {
+            "group": "Step",
+            "label": "URL",
+            "order": 5,
+            "widget": "text"
+          }
+        },
+        "target": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BrowserTarget"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The element to act on.",
+          "examples": [
+            {
+              "name": "Send",
+              "role": "button"
+            }
+          ],
+          "title": "Target",
+          "x-ui": {
+            "group": "Step",
+            "label": "Target",
+            "order": 6,
+            "widget": "yaml"
+          }
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Text to type, option to pick or key to press; secrets are ${NAME} placeholders.",
+          "examples": [
+            "${STAFF_EMAIL}"
+          ],
+          "title": "Value",
+          "x-ui": {
+            "group": "Step",
+            "label": "Value",
+            "order": 7,
+            "widget": "text"
+          }
+        },
+        "expect": {
+          "$ref": "#/$defs/BrowserExpect",
+          "description": "What the page must show after the step.",
+          "examples": [
+            {
+              "dom_state": {
+                "url": "/"
+              }
+            }
+          ],
+          "title": "Expect",
+          "x-ui": {
+            "group": "Step",
+            "label": "Expect",
+            "order": 8,
+            "widget": "yaml"
+          }
+        }
+      },
+      "required": [
+        "adapter",
+        "action"
+      ],
+      "title": "Browser step",
+      "type": "object"
+    },
+    "BrowserTarget": {
+      "additionalProperties": false,
+      "description": "The element a step acts on: an accessibility role with its name, or a stable selector.",
+      "properties": {
+        "role": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Accessibility role of the element.",
+          "examples": [
+            "button"
+          ],
+          "title": "Role",
+          "x-ui": {
+            "group": "Step",
+            "label": "Role",
+            "order": 1,
+            "widget": "text"
+          }
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Accessible name of the element.",
+          "examples": [
+            "Send"
+          ],
+          "title": "Name",
+          "x-ui": {
+            "group": "Step",
+            "label": "Name",
+            "order": 2,
+            "widget": "text"
+          }
+        },
+        "selector": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Stable selector such as [data-testid=send].",
+          "examples": [
+            "[data-testid=send]"
+          ],
+          "title": "Selector",
+          "x-ui": {
+            "group": "Step",
+            "label": "Selector",
+            "order": 3,
+            "widget": "text"
+          }
+        }
+      },
+      "title": "Browser target",
+      "type": "object"
+    },
+    "CardsExpect": {
+      "additionalProperties": false,
+      "description": "Expectations about the structured cards the system under test showed.",
+      "properties": {
+        "min_count": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Fewest cards accepted.",
+          "examples": [
+            1
+          ],
+          "title": "Minimum count",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Minimum count",
+            "order": 1,
+            "widget": "number"
+          }
+        },
+        "max_count": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Most cards accepted.",
+          "examples": [
+            3
+          ],
+          "title": "Maximum count",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Maximum count",
+            "order": 2,
+            "widget": "number"
+          }
+        },
+        "include": {
+          "description": "Cards that must be present; a card matches when it carries every listed key and value.",
+          "examples": [
+            [
+              {
+                "kind": "confirmation"
+              }
+            ]
+          ],
+          "items": {
+            "additionalProperties": {
+              "$ref": "#/$defs/JsonValue"
+            },
+            "type": "object"
+          },
+          "title": "Include",
+          "type": "array",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Include",
+            "order": 3,
+            "widget": "yaml"
+          }
+        }
+      },
+      "title": "Cards",
+      "type": "object"
+    },
+    "CellRef": {
+      "additionalProperties": false,
+      "description": "The coverage cell a scenario belongs to: one role on one interface.",
+      "properties": {
+        "role": {
+          "description": "Manifest role id of the cell.",
+          "examples": [
+            "staff"
+          ],
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Role",
+          "type": "string",
+          "x-ui": {
+            "group": "Scenario",
+            "label": "Role",
+            "order": 1,
+            "widget": "text"
+          }
+        },
+        "interface_id": {
+          "description": "Manifest interface id of the cell.",
+          "examples": [
+            "chat_sse"
+          ],
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Interface id",
+          "type": "string",
+          "x-ui": {
+            "group": "Scenario",
+            "label": "Interface id",
+            "order": 2,
+            "widget": "text"
+          }
+        }
+      },
+      "required": [
+        "role",
+        "interface_id"
+      ],
+      "title": "Cell",
+      "type": "object"
+    },
+    "ConsoleExpect": {
+      "additionalProperties": false,
+      "description": "Which browser console messages fail the step.",
+      "properties": {
+        "fail_on": {
+          "description": "Console levels that fail the step.",
+          "examples": [
+            [
+              "error"
+            ]
+          ],
+          "items": {
+            "enum": [
+              "error",
+              "warning"
+            ],
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Fail on",
+          "type": "array",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Fail on",
+            "order": 1,
+            "widget": "chips"
+          }
+        },
+        "allow": {
+          "description": "Regular expressions; a message matching one of them never fails the step.",
+          "examples": [
+            [
+              "favicon\\.ico"
+            ]
+          ],
+          "items": {
+            "type": "string"
+          },
+          "title": "Allow",
+          "type": "array",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Allow",
+            "order": 2,
+            "widget": "chips"
+          }
+        }
+      },
+      "title": "Console",
+      "type": "object"
+    },
+    "DbExpect": {
+      "additionalProperties": false,
+      "description": "What the rows of the oracle must look like after the step; at least one assertion is required. ${gold.<key>} references are allowed in the values.",
+      "properties": {
+        "row_count": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "pattern": "^\\$\\{gold\\.[a-z][a-z0-9_]*\\}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Exact number of rows the oracle must return, or a ${gold.<key>} reference.",
+          "examples": [
+            1,
+            "${gold.open_count}"
+          ],
+          "title": "Row count",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Row count",
+            "order": 1,
+            "widget": "text"
+          }
+        },
+        "min_rows": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "pattern": "^\\$\\{gold\\.[a-z][a-z0-9_]*\\}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Fewest rows the oracle may return, or a ${gold.<key>} reference.",
+          "examples": [
+            1
+          ],
+          "title": "Minimum rows",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Minimum rows",
+            "order": 2,
+            "widget": "text"
+          }
+        },
+        "max_rows": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "pattern": "^\\$\\{gold\\.[a-z][a-z0-9_]*\\}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Most rows the oracle may return, or a ${gold.<key>} reference.",
+          "examples": [
+            10
+          ],
+          "title": "Maximum rows",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Maximum rows",
+            "order": 3,
+            "widget": "text"
+          }
+        },
+        "first_row": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "description": "Columns the first row must carry with exactly these values.",
+          "examples": [
+            {
+              "status": "open"
+            }
+          ],
+          "title": "First row",
+          "type": "object",
+          "x-ui": {
+            "group": "Expect",
+            "label": "First row",
+            "order": 4,
+            "widget": "yaml"
+          }
+        },
+        "rows": {
+          "description": "Rows that must be present in any order; each entry matches a different row that carries every listed column with exactly that value.",
+          "examples": [
+            [
+              {
+                "open_issues": 2,
+                "room": "20003"
+              }
+            ]
+          ],
+          "items": {
+            "additionalProperties": {
+              "$ref": "#/$defs/JsonValue"
+            },
+            "type": "object"
+          },
+          "title": "Rows",
+          "type": "array",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Rows",
+            "order": 5,
+            "widget": "yaml"
+          }
+        }
+      },
+      "title": "Database expectation",
+      "type": "object"
+    },
+    "DomStateExpect": {
+      "additionalProperties": false,
+      "description": "What the page must show after the step.",
+      "properties": {
+        "url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Path or address the page must be at; a path matches the end of the page address.",
+          "examples": [
+            "/rooms"
+          ],
+          "title": "URL",
+          "x-ui": {
+            "group": "Expect",
+            "label": "URL",
+            "order": 1,
+            "widget": "text"
+          }
+        },
+        "title_contains": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Text the page title must contain.",
+          "examples": [
+            "Rooms"
+          ],
+          "title": "Title contains",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Title contains",
+            "order": 2,
+            "widget": "text"
+          }
+        },
+        "text_contains": {
+          "description": "Texts that must be visible on the page.",
+          "examples": [
+            [
+              "Issue created"
+            ]
+          ],
+          "items": {
+            "type": "string"
+          },
+          "title": "Text contains",
+          "type": "array",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Text contains",
+            "order": 3,
+            "widget": "chips"
+          }
+        },
+        "text_not_contains": {
+          "description": "Texts that must not be visible on the page.",
+          "examples": [
+            [
+              "Error"
+            ]
+          ],
+          "items": {
+            "type": "string"
+          },
+          "title": "Text not contains",
+          "type": "array",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Text not contains",
+            "order": 4,
+            "widget": "chips"
+          }
+        },
+        "visible": {
+          "description": "Elements that must be visible.",
+          "examples": [
+            [
+              {
+                "name": "Confirm",
+                "role": "button"
+              }
+            ]
+          ],
+          "items": {
+            "$ref": "#/$defs/BrowserTarget"
+          },
+          "title": "Visible",
+          "type": "array",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Visible",
+            "order": 5,
+            "widget": "yaml"
+          }
+        },
+        "hidden": {
+          "description": "Elements that must be hidden or absent.",
+          "examples": [
+            [
+              {
+                "selector": "[data-testid=error]"
+              }
+            ]
+          ],
+          "items": {
+            "$ref": "#/$defs/BrowserTarget"
+          },
+          "title": "Hidden",
+          "type": "array",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Hidden",
+            "order": 6,
+            "widget": "yaml"
+          }
+        }
+      },
+      "title": "Page state",
+      "type": "object"
+    },
+    "EventsExpect": {
+      "additionalProperties": false,
+      "description": "Event names the stream must or must not contain.",
+      "properties": {
+        "include": {
+          "description": "Event names that must appear.",
+          "examples": [
+            [
+              "done"
+            ]
+          ],
+          "items": {
+            "type": "string"
+          },
+          "title": "Include",
+          "type": "array",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Include",
+            "order": 1,
+            "widget": "chips"
+          }
+        },
+        "exclude": {
+          "description": "Event names that must not appear.",
+          "examples": [
+            [
+              "error"
+            ]
+          ],
+          "items": {
+            "type": "string"
+          },
+          "title": "Exclude",
+          "type": "array",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Exclude",
+            "order": 2,
+            "widget": "chips"
+          }
+        }
+      },
+      "title": "Stream events",
+      "type": "object"
+    },
+    "ExpectDb": {
+      "additionalProperties": false,
+      "description": "Runs an approved oracle after the step and checks its rows against the expectation, retrying until retry_for_seconds have passed so asynchronous writes can land.",
+      "properties": {
+        "oracle": {
+          "description": "Name of an oracle of the bundle (oracle/<name>.yaml).",
+          "examples": [
+            "issue_by_title"
+          ],
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
+          "title": "Oracle",
+          "type": "string",
+          "x-ui": {
+            "group": "Step",
+            "label": "Oracle",
+            "order": 1,
+            "widget": "text"
+          }
+        },
+        "params": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "description": "Values for the oracle parameters; same rules as gold_from.",
+          "examples": [
+            {
+              "title": "Broken lamp"
+            }
+          ],
+          "title": "Parameters",
+          "type": "object",
+          "x-ui": {
+            "group": "Step",
+            "label": "Parameters",
+            "order": 2,
+            "widget": "yaml"
+          }
+        },
+        "expect": {
+          "$ref": "#/$defs/DbExpect",
+          "description": "What the oracle rows must look like.",
+          "examples": [
+            {
+              "row_count": 1
+            }
+          ],
+          "title": "Expect",
+          "x-ui": {
+            "group": "Step",
+            "label": "Expect",
+            "order": 3,
+            "widget": "yaml"
+          }
+        },
+        "retry_for_seconds": {
+          "default": 0,
+          "description": "Seconds to keep re-running the oracle while the expectation does not hold yet.",
+          "examples": [
+            5
+          ],
+          "maximum": 60,
+          "minimum": 0,
+          "title": "Retry for",
+          "type": "integer",
+          "x-ui": {
+            "group": "Step",
+            "label": "Retry for",
+            "order": 4,
+            "widget": "number"
+          }
+        }
+      },
+      "required": [
+        "oracle",
+        "expect"
+      ],
+      "title": "Database check",
+      "type": "object"
+    },
+    "FieldCheck": {
+      "additionalProperties": false,
+      "description": "One assertion about a value inside the parsed JSON response body; at least one assertion besides path is required. A null equals is no assertion: use type null.",
+      "properties": {
+        "path": {
+          "description": "Dotted path from the body root with [n] array indexes; a leading $. is accepted.",
+          "examples": [
+            "items[0].id",
+            "$.total"
+          ],
+          "pattern": "^(\\$\\.?)?([A-Za-z0-9_-]+|\\[\\d+\\])(\\.[A-Za-z0-9_-]+|\\[\\d+\\])*$",
+          "title": "Path",
+          "type": "string",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Path",
+            "order": 1,
+            "widget": "text"
+          }
+        },
+        "exists": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "true when the path must exist, false when it must not.",
+          "examples": [
+            true
+          ],
+          "title": "Exists",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Exists",
+            "order": 2,
+            "widget": "toggle"
+          }
+        },
+        "equals": {
+          "$ref": "#/$defs/JsonValue",
+          "default": null,
+          "description": "Value the field must equal; to assert null use type null.",
+          "examples": [
+            "open"
+          ],
+          "title": "Equals",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Equals",
+            "order": 3,
+            "widget": "text"
+          }
+        },
+        "type": {
+          "anyOf": [
+            {
+              "enum": [
+                "string",
+                "number",
+                "integer",
+                "boolean",
+                "array",
+                "object",
+                "null"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "JSON type the value must have.",
+          "examples": [
+            "string"
+          ],
+          "title": "Type",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Type",
+            "order": 4,
+            "widget": "select"
+          }
+        },
+        "matches": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Regular expression the string value must match.",
+          "examples": [
+            "^[A-Z]{3}-\\d+$"
+          ],
+          "title": "Matches",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Matches",
+            "order": 5,
+            "widget": "text"
+          }
+        },
+        "min_length": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Shortest accepted string or array.",
+          "examples": [
+            1
+          ],
+          "title": "Minimum length",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Minimum length",
+            "order": 6,
+            "widget": "number"
+          }
+        },
+        "max_length": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Longest accepted string or array.",
+          "examples": [
+            100
+          ],
+          "title": "Maximum length",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Maximum length",
+            "order": 7,
+            "widget": "number"
+          }
+        },
+        "gte": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Smallest accepted number.",
+          "examples": [
+            0
+          ],
+          "title": "At least",
+          "x-ui": {
+            "group": "Expect",
+            "label": "At least",
+            "order": 8,
+            "widget": "number"
+          }
+        },
+        "lte": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Largest accepted number.",
+          "examples": [
+            100
+          ],
+          "title": "At most",
+          "x-ui": {
+            "group": "Expect",
+            "label": "At most",
+            "order": 9,
+            "widget": "number"
+          }
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "title": "Field check",
+      "type": "object"
+    },
+    "GoldFrom": {
+      "additionalProperties": false,
+      "description": "Runs an approved oracle just before the step. Its gold points become available as ${gold.<key>} in the expectations of this step and of every later step.",
+      "properties": {
+        "oracle": {
+          "description": "Name of an oracle of the bundle (oracle/<name>.yaml).",
+          "examples": [
+            "open_maintenance"
+          ],
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
+          "title": "Oracle",
+          "type": "string",
+          "x-ui": {
+            "group": "Step",
+            "label": "Oracle",
+            "order": 1,
+            "widget": "text"
+          }
+        },
+        "params": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "description": "Values for the oracle parameters. Parameters with an x-source (clock, role, literal) or a default are supplied when absent; ${NAME} placeholders resolve from the target environment.",
+          "examples": [
+            {
+              "tenant_id": "${QA_TENANT_ID}"
+            }
+          ],
+          "title": "Parameters",
+          "type": "object",
+          "x-ui": {
+            "group": "Step",
+            "label": "Parameters",
+            "order": 2,
+            "widget": "yaml"
+          }
+        }
+      },
+      "required": [
+        "oracle"
+      ],
+      "title": "Gold source",
+      "type": "object"
+    },
+    "HttpExpect": {
+      "additionalProperties": false,
+      "description": "What a response of an http step must look like.",
+      "properties": {
+        "status": {
+          "anyOf": [
+            {
+              "maximum": 599,
+              "minimum": 100,
+              "type": "integer"
+            },
+            {
+              "items": {
+                "maximum": 599,
+                "minimum": 100,
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Accepted status code or codes; when absent the status check does not run.",
+          "examples": [
+            200,
+            [
+              200,
+              201
+            ]
+          ],
+          "title": "Status",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Status",
+            "order": 1,
+            "widget": "text"
+          }
+        },
+        "schema": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "$ref": "#/$defs/JsonValue"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "JSON Schema the parsed body must satisfy.",
+          "examples": [
+            {
+              "required": [
+                "items"
+              ],
+              "type": "object"
+            }
+          ],
+          "title": "Body schema",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Body schema",
+            "order": 2,
+            "widget": "yaml"
+          }
+        },
+        "fields": {
+          "description": "Assertions about values inside the body.",
+          "examples": [
+            [
+              {
+                "min_length": 1,
+                "path": "items"
+              }
+            ]
+          ],
+          "items": {
+            "$ref": "#/$defs/FieldCheck"
+          },
+          "title": "Fields",
+          "type": "array",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Fields",
+            "order": 3,
+            "widget": "yaml"
+          }
+        },
+        "latency": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HttpLatencyExpect"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Upper bound on the response time.",
+          "examples": [
+            {
+              "max_ms": 2000
+            }
+          ],
+          "title": "Latency",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Latency",
+            "order": 4,
+            "widget": "yaml"
+          }
+        },
+        "internal_ids": {
+          "default": true,
+          "description": "True checks that the body shows no internal identifiers.",
+          "examples": [
+            true
+          ],
+          "title": "Internal ids",
+          "type": "boolean",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Internal ids",
+            "order": 5,
+            "widget": "toggle"
+          }
+        },
+        "free_text": {
+          "anyOf": [
+            {
+              "maxLength": 4000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "What the response should show, in words, kept for model grading in a later stage.",
+          "examples": [
+            "A page of rooms"
+          ],
+          "title": "Free text",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Free text",
+            "order": 6,
+            "widget": "textarea"
+          }
+        }
+      },
+      "title": "HTTP expectations",
+      "type": "object"
+    },
+    "HttpLatencyExpect": {
+      "additionalProperties": false,
+      "description": "Upper bound on the time the response took.",
+      "properties": {
+        "max_ms": {
+          "description": "Slowest accepted response time in milliseconds.",
+          "examples": [
+            2000
+          ],
+          "minimum": 1,
+          "title": "Maximum",
+          "type": "integer",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Maximum",
+            "order": 1,
+            "widget": "number"
+          }
+        }
+      },
+      "required": [
+        "max_ms"
+      ],
+      "title": "HTTP latency",
+      "type": "object"
+    },
+    "HttpStep": {
+      "additionalProperties": false,
+      "description": "One request to an http interface and what the response must look like.",
+      "properties": {
+        "label": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Short description shown in the step list; a default is derived when absent.",
+          "examples": [
+            "List open maintenance issues"
+          ],
+          "title": "Label",
+          "x-ui": {
+            "group": "Step",
+            "label": "Label",
+            "order": 1,
+            "widget": "text"
+          }
+        },
+        "as": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Run this step under another identity: anonymous or a role id. Absent uses the scenario role.",
+          "examples": [
+            "anonymous"
+          ],
+          "title": "As",
+          "x-ui": {
+            "group": "Step",
+            "label": "As",
+            "order": 2,
+            "widget": "text"
+          }
+        },
+        "gold_from": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/GoldFrom"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Oracle to run before the step; its gold points feed ${gold.<key>} references in text_contains, fields and expect_db.expect.",
+          "examples": [
+            {
+              "oracle": "open_maintenance"
+            }
+          ],
+          "title": "Gold from",
+          "x-ui": {
+            "group": "Step",
+            "label": "Gold from",
+            "order": 20,
+            "widget": "yaml"
+          }
+        },
+        "expect_db": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ExpectDb"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Oracle check run after the step against the truth database.",
+          "examples": [
+            {
+              "expect": {
+                "row_count": 1
+              },
+              "oracle": "issue_by_title",
+              "retry_for_seconds": 5
+            }
+          ],
+          "title": "Expect database",
+          "x-ui": {
+            "group": "Step",
+            "label": "Expect database",
+            "order": 21,
+            "widget": "yaml"
+          }
+        },
+        "adapter": {
+          "const": "http",
+          "description": "Step kind.",
+          "examples": [
+            "http"
+          ],
+          "title": "Adapter",
+          "type": "string",
+          "x-ui": {
+            "group": "Step",
+            "label": "Adapter",
+            "order": 3,
+            "widget": "select"
+          }
+        },
+        "request": {
+          "$ref": "#/$defs/RequestSpec",
+          "description": "The request to send.",
+          "examples": [
+            {
+              "method": "GET",
+              "path": "/api/rooms"
+            }
+          ],
+          "x-ui": {
+            "group": "Step",
+            "label": "Request",
+            "order": 4,
+            "widget": "yaml"
+          },
+          "title": "Request"
+        },
+        "expect": {
+          "$ref": "#/$defs/HttpExpect",
+          "description": "What the response must look like.",
+          "examples": [
+            {
+              "status": 200
+            }
+          ],
+          "title": "Expect",
+          "x-ui": {
+            "group": "Step",
+            "label": "Expect",
+            "order": 5,
+            "widget": "yaml"
+          }
+        }
+      },
+      "required": [
+        "adapter",
+        "request"
+      ],
+      "title": "HTTP step",
+      "type": "object"
+    },
+    "JsonValue": {},
+    "RequestSpec": {
+      "additionalProperties": false,
+      "description": "A request to an interface of the target. The address is the interface base plus path.",
+      "properties": {
+        "method": {
+          "description": "HTTP method.",
+          "enum": [
+            "GET",
+            "POST",
+            "PUT",
+            "PATCH",
+            "DELETE",
+            "HEAD",
+            "OPTIONS"
+          ],
+          "examples": [
+            "GET"
+          ],
+          "title": "Method",
+          "type": "string",
+          "x-ui": {
+            "group": "Step",
+            "label": "Method",
+            "order": 1,
+            "widget": "select"
+          }
+        },
+        "path": {
+          "description": "Path below the interface address, starting with one slash; ${NAME} placeholders allowed.",
+          "examples": [
+            "/api/rooms"
+          ],
+          "pattern": "^/([^/\\s]\\S*)?$",
+          "title": "Path",
+          "type": "string",
+          "x-ui": {
+            "group": "Step",
+            "label": "Path",
+            "order": 2,
+            "widget": "text"
+          }
+        },
+        "headers": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Extra request headers; secrets are written as ${NAME} placeholders.",
+          "examples": [
+            {
+              "Accept": "application/json"
+            }
+          ],
+          "title": "Headers",
+          "type": "object",
+          "x-ui": {
+            "group": "Step",
+            "label": "Headers",
+            "order": 3,
+            "widget": "yaml"
+          }
+        },
+        "query": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "boolean"
+                    }
+                  ]
+                },
+                "type": "array"
+              }
+            ]
+          },
+          "description": "Query parameters; a list value repeats the parameter.",
+          "examples": [
+            {
+              "limit": 5
+            }
+          ],
+          "title": "Query",
+          "type": "object",
+          "x-ui": {
+            "group": "Step",
+            "label": "Query",
+            "order": 4,
+            "widget": "yaml"
+          }
+        },
+        "body": {
+          "$ref": "#/$defs/JsonValue",
+          "default": null,
+          "description": "JSON body of the request; null sends none.",
+          "examples": [
+            {
+              "message": "Which maintenance issues are still open?"
+            }
+          ],
+          "title": "Body",
+          "x-ui": {
+            "group": "Step",
+            "label": "Body",
+            "order": 5,
+            "widget": "yaml"
+          }
+        }
+      },
+      "required": [
+        "method",
+        "path"
+      ],
+      "title": "Request",
+      "type": "object"
+    },
+    "SseExpect": {
+      "additionalProperties": false,
+      "description": "What the stream of an sse step must look like.",
+      "properties": {
+        "status": {
+          "anyOf": [
+            {
+              "maximum": 599,
+              "minimum": 100,
+              "type": "integer"
+            },
+            {
+              "items": {
+                "maximum": 599,
+                "minimum": 100,
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Accepted status code or codes of the stream response; also reports event expectations.",
+          "examples": [
+            200
+          ],
+          "title": "Status",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Status",
+            "order": 1,
+            "widget": "text"
+          }
+        },
+        "events": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EventsExpect"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Event names the stream must or must not contain.",
+          "examples": [
+            {
+              "include": [
+                "done"
+              ]
+            }
+          ],
+          "title": "Events",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Events",
+            "order": 2,
+            "widget": "yaml"
+          }
+        },
+        "tools": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ToolsExpect"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Expectations about the tool calls.",
+          "examples": [
+            {
+              "include": [
+                "search_documents"
+              ]
+            }
+          ],
+          "title": "Tools",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Tools",
+            "order": 3,
+            "widget": "yaml"
+          }
+        },
+        "cards": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CardsExpect"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Expectations about the cards shown.",
+          "examples": [
+            {
+              "min_count": 1
+            }
+          ],
+          "title": "Cards",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Cards",
+            "order": 4,
+            "widget": "yaml"
+          }
+        },
+        "text_contains": {
+          "description": "Texts the answer must contain, ignoring case.",
+          "examples": [
+            [
+              "two pets"
+            ]
+          ],
+          "items": {
+            "type": "string"
+          },
+          "title": "Text contains",
+          "type": "array",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Text contains",
+            "order": 5,
+            "widget": "chips"
+          }
+        },
+        "text_contains_any": {
+          "description": "The answer must contain at least one of these texts, ignoring case.",
+          "examples": [
+            [
+              "no late check-out fee",
+              "does not state a late check-out fee"
+            ]
+          ],
+          "items": {
+            "type": "string"
+          },
+          "title": "Text contains any",
+          "type": "array",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Text contains any",
+            "order": 6,
+            "widget": "chips"
+          }
+        },
+        "text_not_contains": {
+          "description": "Texts the answer must not contain, ignoring case.",
+          "examples": [
+            [
+              "I have created"
+            ]
+          ],
+          "items": {
+            "type": "string"
+          },
+          "title": "Text not contains",
+          "type": "array",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Text not contains",
+            "order": 7,
+            "widget": "chips"
+          }
+        },
+        "non_empty_answer": {
+          "default": true,
+          "description": "True fails the step when the answer the adapter extracted is empty, reported as a text_contains failure; an answer the adapter could not extract (null) never fails.",
+          "examples": [
+            true
+          ],
+          "title": "Non-empty answer",
+          "type": "boolean",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Non-empty answer",
+            "order": 8,
+            "widget": "toggle"
+          }
+        },
+        "latency": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SseLatencyExpect"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Upper bounds on the stream times.",
+          "examples": [
+            {
+              "max_first_byte_ms": 5000
+            }
+          ],
+          "title": "Latency",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Latency",
+            "order": 9,
+            "widget": "yaml"
+          }
+        },
+        "internal_ids": {
+          "default": true,
+          "description": "True checks that the answer shows no internal identifiers.",
+          "examples": [
+            true
+          ],
+          "title": "Internal ids",
+          "type": "boolean",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Internal ids",
+            "order": 10,
+            "widget": "toggle"
+          }
+        },
+        "free_text": {
+          "anyOf": [
+            {
+              "maxLength": 4000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "What the answer should say, in words, kept for model grading in a later stage.",
+          "examples": [
+            "Count of open items and the rooms with the most"
+          ],
+          "title": "Free text",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Free text",
+            "order": 11,
+            "widget": "textarea"
+          }
+        }
+      },
+      "title": "SSE expectations",
+      "type": "object"
+    },
+    "SseLatencyExpect": {
+      "additionalProperties": false,
+      "description": "Upper bounds on a stream: time to the first event and total time.",
+      "properties": {
+        "max_ms": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Slowest accepted total stream time in milliseconds.",
+          "examples": [
+            30000
+          ],
+          "title": "Maximum total",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Maximum total",
+            "order": 1,
+            "widget": "number"
+          }
+        },
+        "max_first_byte_ms": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Slowest accepted time to the first event in milliseconds.",
+          "examples": [
+            5000
+          ],
+          "title": "Maximum first byte",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Maximum first byte",
+            "order": 2,
+            "widget": "number"
+          }
+        }
+      },
+      "title": "SSE latency",
+      "type": "object"
+    },
+    "SseStep": {
+      "additionalProperties": false,
+      "description": "One request to a streaming interface, usually a chat, and what the stream must look like.",
+      "properties": {
+        "label": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Short description shown in the step list; a default is derived when absent.",
+          "examples": [
+            "List open maintenance issues"
+          ],
+          "title": "Label",
+          "x-ui": {
+            "group": "Step",
+            "label": "Label",
+            "order": 1,
+            "widget": "text"
+          }
+        },
+        "as": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Run this step under another identity: anonymous or a role id. Absent uses the scenario role.",
+          "examples": [
+            "anonymous"
+          ],
+          "title": "As",
+          "x-ui": {
+            "group": "Step",
+            "label": "As",
+            "order": 2,
+            "widget": "text"
+          }
+        },
+        "gold_from": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/GoldFrom"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Oracle to run before the step; its gold points feed ${gold.<key>} references in text_contains, fields and expect_db.expect.",
+          "examples": [
+            {
+              "oracle": "open_maintenance"
+            }
+          ],
+          "title": "Gold from",
+          "x-ui": {
+            "group": "Step",
+            "label": "Gold from",
+            "order": 20,
+            "widget": "yaml"
+          }
+        },
+        "expect_db": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ExpectDb"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Oracle check run after the step against the truth database.",
+          "examples": [
+            {
+              "expect": {
+                "row_count": 1
+              },
+              "oracle": "issue_by_title",
+              "retry_for_seconds": 5
+            }
+          ],
+          "title": "Expect database",
+          "x-ui": {
+            "group": "Step",
+            "label": "Expect database",
+            "order": 21,
+            "widget": "yaml"
+          }
+        },
+        "adapter": {
+          "const": "sse",
+          "description": "Step kind.",
+          "examples": [
+            "sse"
+          ],
+          "title": "Adapter",
+          "type": "string",
+          "x-ui": {
+            "group": "Step",
+            "label": "Adapter",
+            "order": 3,
+            "widget": "select"
+          }
+        },
+        "ask": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The natural language input, recorded as the ask of the step; the request carries it too.",
+          "examples": [
+            "Which maintenance issues are still open?"
+          ],
+          "title": "Ask",
+          "x-ui": {
+            "group": "Step",
+            "label": "Ask",
+            "order": 4,
+            "widget": "textarea"
+          }
+        },
+        "request": {
+          "$ref": "#/$defs/RequestSpec",
+          "description": "The request that opens the stream.",
+          "examples": [
+            {
+              "body": {
+                "message": "Hello"
+              },
+              "method": "POST",
+              "path": "/api/chat"
+            }
+          ],
+          "x-ui": {
+            "group": "Step",
+            "label": "Request",
+            "order": 5,
+            "widget": "yaml"
+          },
+          "title": "Request"
+        },
+        "expect": {
+          "$ref": "#/$defs/SseExpect",
+          "description": "What the stream must look like.",
+          "examples": [
+            {
+              "status": 200
+            }
+          ],
+          "title": "Expect",
+          "x-ui": {
+            "group": "Step",
+            "label": "Expect",
+            "order": 6,
+            "widget": "yaml"
+          }
+        }
+      },
+      "required": [
+        "adapter",
+        "request"
+      ],
+      "title": "SSE step",
+      "type": "object"
+    },
+    "ToolMatch": {
+      "additionalProperties": false,
+      "description": "A tool call to look for: its name, and optionally arguments it must carry.",
+      "properties": {
+        "name": {
+          "description": "Tool name.",
+          "examples": [
+            "search_documents"
+          ],
+          "minLength": 1,
+          "title": "Name",
+          "type": "string",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Name",
+            "order": 1,
+            "widget": "text"
+          }
+        },
+        "args": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "description": "Arguments the call must contain; each listed value must equal the call's value.",
+          "examples": [
+            {
+              "room": "20003"
+            }
+          ],
+          "title": "Arguments",
+          "type": "object",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Arguments",
+            "order": 2,
+            "widget": "yaml"
+          }
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "Tool match",
+      "type": "object"
+    },
+    "ToolsExpect": {
+      "additionalProperties": false,
+      "description": "Expectations about the tools the system under test called.",
+      "properties": {
+        "include": {
+          "description": "Tools that must have been called; a bare name matches any arguments.",
+          "examples": [
+            [
+              "search_documents"
+            ]
+          ],
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/$defs/ToolMatch"
+              }
+            ]
+          },
+          "title": "Include",
+          "type": "array",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Include",
+            "order": 1,
+            "widget": "yaml"
+          }
+        },
+        "exclude": {
+          "description": "Tools that must not have been called; with args only a call carrying them counts.",
+          "examples": [
+            [
+              "query_rooms"
+            ]
+          ],
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/$defs/ToolMatch"
+              }
+            ]
+          },
+          "title": "Exclude",
+          "type": "array",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Exclude",
+            "order": 2,
+            "widget": "yaml"
+          }
+        },
+        "none": {
+          "default": false,
+          "description": "True when the step must call no tool at all.",
+          "examples": [
+            true
+          ],
+          "title": "None",
+          "type": "boolean",
+          "x-ui": {
+            "group": "Expect",
+            "label": "None",
+            "order": 3,
+            "widget": "toggle"
+          }
+        },
+        "at_least_one": {
+          "default": false,
+          "description": "True when the step must call some tool.",
+          "examples": [
+            true
+          ],
+          "title": "At least one",
+          "type": "boolean",
+          "x-ui": {
+            "group": "Expect",
+            "label": "At least one",
+            "order": 4,
+            "widget": "toggle"
+          }
+        },
+        "max_calls": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Most tool calls accepted.",
+          "examples": [
+            3
+          ],
+          "title": "Maximum calls",
+          "x-ui": {
+            "group": "Expect",
+            "label": "Maximum calls",
+            "order": 5,
+            "widget": "number"
+          }
+        }
+      },
+      "title": "Tools",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": 1,
+      "description": "Version of this document format.",
+      "examples": [
+        1
+      ],
+      "title": "Schema version",
+      "type": "integer",
+      "x-ui": {
+        "group": "Scenario",
+        "label": "Schema version",
+        "order": 1,
+        "widget": "number"
+      }
+    },
+    "id": {
+      "anyOf": [
+        {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Stable key of an authored scenario, kept across edits and re-imports.",
+      "examples": [
+        "smart-log-open-issues"
+      ],
+      "title": "Id",
+      "x-ui": {
+        "group": "Scenario",
+        "label": "Id",
+        "order": 2,
+        "widget": "text"
+      }
+    },
+    "title": {
+      "description": "Name shown in the library and the run.",
+      "examples": [
+        "Staff lists open maintenance issues"
+      ],
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Title",
+      "type": "string",
+      "x-ui": {
+        "group": "Scenario",
+        "label": "Title",
+        "order": 3,
+        "widget": "text"
+      }
+    },
+    "feature_id": {
+      "anyOf": [
+        {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Manifest feature the scenario tests; absent for synthetic scenarios.",
+      "examples": [
+        "smart_log.read.open_maintenance"
+      ],
+      "title": "Feature id",
+      "x-ui": {
+        "group": "Scenario",
+        "label": "Feature id",
+        "order": 4,
+        "widget": "text"
+      }
+    },
+    "family": {
+      "description": "Group the scenario counts under, for pass rates; a slug.",
+      "examples": [
+        "smart-log"
+      ],
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Family",
+      "type": "string",
+      "x-ui": {
+        "group": "Scenario",
+        "label": "Family",
+        "order": 5,
+        "widget": "text"
+      }
+    },
+    "role": {
+      "description": "Manifest role id the scenario runs as.",
+      "examples": [
+        "staff"
+      ],
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Role",
+      "type": "string",
+      "x-ui": {
+        "group": "Scenario",
+        "label": "Role",
+        "order": 6,
+        "widget": "text"
+      }
+    },
+    "interface_id": {
+      "description": "Manifest interface id the scenario runs against.",
+      "examples": [
+        "chat_sse"
+      ],
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Interface id",
+      "type": "string",
+      "x-ui": {
+        "group": "Scenario",
+        "label": "Interface id",
+        "order": 7,
+        "widget": "text"
+      }
+    },
+    "timeout_seconds": {
+      "anyOf": [
+        {
+          "maximum": 3600,
+          "minimum": 1,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Longest the scenario may take in seconds; absent uses the worker default.",
+      "examples": [
+        120
+      ],
+      "title": "Timeout",
+      "x-ui": {
+        "group": "Scenario",
+        "label": "Timeout",
+        "order": 8,
+        "widget": "number"
+      }
+    },
+    "cell": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/CellRef"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "The coverage cell of the scenario; when given it must equal role and interface_id.",
+      "examples": [
+        {
+          "interface_id": "chat_sse",
+          "role": "staff"
+        }
+      ],
+      "title": "Cell",
+      "x-ui": {
+        "group": "Scenario",
+        "label": "Cell",
+        "order": 9,
+        "widget": "yaml"
+      }
+    },
+    "authored_from": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Id of the Author prompt issue that produced the scenario.",
+      "examples": [
+        "0198f6f2-4c2a-7d10-9c1e-6a4f0d3b8e11"
+      ],
+      "title": "Authored from",
+      "x-ui": {
+        "group": "Scenario",
+        "label": "Authored from",
+        "order": 10,
+        "widget": "text"
+      }
+    },
+    "synthetic": {
+      "default": false,
+      "description": "True for scenarios Tessa generates itself, hidden from the library by default.",
+      "examples": [
+        false
+      ],
+      "title": "Synthetic",
+      "type": "boolean",
+      "x-ui": {
+        "group": "Scenario",
+        "label": "Synthetic",
+        "order": 11,
+        "widget": "toggle"
+      }
+    },
+    "steps": {
+      "description": "Ordered steps; each runs after the previous one.",
+      "examples": [
+        [
+          {
+            "adapter": "http",
+            "request": {
+              "method": "GET",
+              "path": "/api/rooms"
+            }
+          }
+        ]
+      ],
+      "items": {
+        "discriminator": {
+          "mapping": {
+            "browser": "#/$defs/BrowserStep",
+            "http": "#/$defs/HttpStep",
+            "sse": "#/$defs/SseStep"
+          },
+          "propertyName": "adapter"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/$defs/HttpStep"
+          },
+          {
+            "$ref": "#/$defs/SseStep"
+          },
+          {
+            "$ref": "#/$defs/BrowserStep"
+          }
+        ]
+      },
+      "maxItems": 200,
+      "minItems": 1,
+      "title": "Steps",
+      "type": "array",
+      "x-ui": {
+        "group": "Scenario",
+        "label": "Steps",
+        "order": 12,
+        "widget": "yaml"
+      }
+    }
+  },
+  "required": [
+    "schema_version",
+    "title",
+    "family",
+    "role",
+    "interface_id",
+    "steps"
+  ],
+  "type": "object"
+}

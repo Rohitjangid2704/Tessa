@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.tessa.invalid/stream-event.v1.json",
+  "title": "Tessa stream event envelope v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["type", "run_id", "seq", "ts", "payload"],
+  "properties": {
+    "type": {
+      "enum": [
+        "stream.hello",
+        "stream.replay_end",
+        "stream.resync_required",
+        "stream.heartbeat",
+        "stream.closing",
+        "stream.error",
+        "hello.tick",
+        "hello.laya",
+        "run.created",
+        "run.status_changed",
+        "run.finished"
+      ]
+    },
+    "run_id": { "type": ["string", "null"], "format": "uuid" },
+    "seq": { "type": ["integer", "null"], "minimum": 1 },
+    "ts": { "type": "string", "format": "date-time" },
+    "payload": { "type": "object" }
+  }
+}

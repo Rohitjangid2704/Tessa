@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Persona",
+  "description": "A simulated user: who they are and how they talk to the app.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name", "description", "traits"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120,
+      "description": "A short name that tells personas apart in lists.",
+      "x-ui": {
+        "label": "Name",
+        "group": "Who",
+        "order": 10,
+        "widget": "text",
+        "placeholder": "Impatient front desk guest"
+      }
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000,
+      "description": "Background the simulator plays: who they are and what they want from the app.",
+      "x-ui": {
+        "label": "Description",
+        "group": "Who",
+        "order": 20,
+        "widget": "textarea",
+        "rows": 4
+      }
+    },
+    "traits": {
+      "type": "object",
+      "default": { "tone": "terse", "patience": "low", "tech_savvy": 2 },
+      "description": "Free-form traits the simulator follows, written as a JSON object.",
+      "x-ui": {
+        "label": "Traits",
+        "group": "How they behave",
+        "order": 30,
+        "widget": "json",
+        "rows": 8
+      }
+    }
+  }
+}

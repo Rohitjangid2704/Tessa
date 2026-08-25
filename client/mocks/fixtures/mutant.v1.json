@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "mutant.v1.json",
+  "title": "Tessa mutant",
+  "description": "One known bug: a branch of the app with a single deliberate defect, and the invariants that should catch it.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name", "branch", "description", "expected_catchers"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120,
+      "description": "A short slug that names the bug, for example skip-tenant-filter-on-issue-list.",
+      "x-ui": {
+        "label": "Name",
+        "group": "The bug",
+        "order": 10,
+        "widget": "text",
+        "placeholder": "skip-tenant-filter-on-issue-list"
+      }
+    },
+    "branch": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "The git branch that carries the defect.",
+      "x-ui": {
+        "label": "Branch",
+        "group": "The bug",
+        "order": 20,
+        "widget": "text",
+        "placeholder": "mutant/skip-tenant-filter-on-issue-list"
+      }
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000,
+      "description": "What the branch breaks, in a sentence or two.",
+      "x-ui": {
+        "label": "What it breaks",
+        "group": "The bug",
+        "order": 30,
+        "widget": "textarea",
+        "rows": 3
+      }
+    },
+    "expected_catchers": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 20,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 80
+      },
+      "description": "The invariants that should fail when this bug is present. A mutant that none of them catches survives.",
+      "x-ui": {
+        "label": "Invariants that should catch it",
+        "group": "What should catch it",
+        "order": 40,
+        "widget": "invariants"
+      }
+    },
+    "base_url": {
+      "type": "string",
+      "maxLength": 500,
+      "pattern": "^https?://\\S+$",
+      "description": "Where the branch is deployed on QA. Required before the mutant can be marked deployed; a run can also override it.",
+      "x-ui": {
+        "label": "Deployed at",
+        "group": "Where it runs",
+        "order": 50,
+        "widget": "text",
+        "placeholder": "https://gracie-mutant-1.qa.example.test"
+      }
+    }
+  }
+}

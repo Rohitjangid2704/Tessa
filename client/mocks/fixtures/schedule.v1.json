@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schedule.v1.json",
+  "title": "Tessa schedule",
+  "description": "A recurring run of one saved plan: when it fires, how much it may spend and who hears about it.",
+  "$defs": {
+    "Budget": {
+      "additionalProperties": false,
+      "description": "Ceilings for one run.",
+      "properties": {
+        "max_minutes": {
+          "description": "Wall clock ceiling in minutes.",
+          "minimum": 1,
+          "title": "Max Minutes",
+          "type": "integer"
+        },
+        "max_usd": {
+          "description": "Spend ceiling in USD.",
+          "exclusiveMinimum": 0,
+          "title": "Max Usd",
+          "type": "number"
+        }
+      },
+      "required": ["max_usd", "max_minutes"],
+      "title": "Budget",
+      "type": "object"
+    },
+    "ScheduleNotify": {
+      "additionalProperties": false,
+      "description": "Where a finished scheduled run is announced.",
+      "properties": {
+        "email": {
+          "default": [],
+          "description": "Addresses that receive the summary mail.",
+          "items": {
+            "format": "email",
+            "maxLength": 254,
+            "type": "string"
+          },
+          "maxItems": 20,
+          "title": "Email",
+          "type": "array"
+        },
+        "slack": {
+          "default": false,
+          "description": "Post the summary to the Slack webhook set in Settings.",
+          "title": "Slack",
+          "type": "boolean"
+        }
+      },
+      "title": "ScheduleNotify",
+      "type": "object"
+    },
+    "ScheduleTier": {
+      "description": "commit runs from CI through run-now, nightly and weekly run on a cron.",
+      "enum": ["commit", "nightly", "weekly"],
+      "title": "ScheduleTier",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "budget": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Budget"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Optional ceilings for each run; the plan budget applies when empty.",
+      "title": "Budget"
+    },
+    "cron": {
+      "anyOf": [
+        {
+          "maxLength": 120,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Five-field cron read in the schedule time zone. Required for nightly and weekly; the commit tier takes none.",
+      "title": "Cron"
+    },
+    "enabled": {
+      "default": true,
+      "description": "A disabled schedule keeps its settings and does not fire.",
+      "title": "Enabled",
+      "type": "boolean"
+    },
+    "notify": {
+      "$ref": "#/$defs/ScheduleNotify"
+    },
+    "plan_id": {
+      "description": "The saved plan this schedule runs.",
+      "format": "uuid",
+      "title": "Plan",
+      "type": "string"
+    },
+    "tier": {
+      "$ref": "#/$defs/ScheduleTier",
+      "default": "nightly",
+      "description": "How the schedule is triggered.",
+      "title": "Tier"
+    },
+    "timezone": {
+      "default": "UTC",
+      "description": "IANA time zone name such as Europe/London. The cron is read in this zone.",
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Time zone",
+      "type": "string"
+    }
+  },
+  "required": ["plan_id", "tier", "timezone", "enabled", "notify"],
+  "type": "object"
+}

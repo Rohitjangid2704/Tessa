@@ -1,0 +1,207 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.tessa.invalid/bundle.v1.json",
+  "title": "Tessa bundle manifest v1",
+  "description": "Machine-readable manifest of the tessa/ bundle that Claude Code writes for a target.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["target_token", "app", "interfaces", "features"],
+  "properties": {
+    "target_token": {
+      "type": "string",
+      "description": "Routing identifier of the target, rendered by Tessa into the Discovery prompt.",
+      "pattern": "^tgt_[A-Z2-7]{22}$",
+      "examples": ["tgt_ABCDEFGHIJKLMNOPQRSTUV"]
+    },
+    "app": { "$ref": "#/$defs/app" },
+    "interfaces": {
+      "type": "array",
+      "description": "Every way a client reaches the app.",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/interface" }
+    },
+    "roles": {
+      "type": "array",
+      "description": "Each role, its level and the environment variable holding its login or token.",
+      "items": { "$ref": "#/$defs/role" }
+    },
+    "features": {
+      "type": "array",
+      "description": "The catalog of testable things.",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/feature" }
+    },
+    "environment": {
+      "type": "array",
+      "description": "Every variable Tessa needs, with placeholders only.",
+      "items": { "$ref": "#/$defs/environmentVariable" }
+    },
+    "invariants": {
+      "type": "array",
+      "description": "Rules that must always hold and how each can be checked.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "description"],
+        "properties": {
+          "id": { "$ref": "#/$defs/slug" },
+          "description": { "type": "string" },
+          "check": { "enum": ["code", "probe", "oracle", "db"] }
+        }
+      }
+    },
+    "seeds": {
+      "type": "object",
+      "description": "How to make a QA tenant look the same every run.",
+      "additionalProperties": false,
+      "properties": {
+        "reset": { "type": "string", "description": "Path of the reset script inside the bundle." },
+        "hash_command": {
+          "type": "string",
+          "description": "Command that prints a hash of the seeded state."
+        }
+      }
+    },
+    "test_hooks": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "available": { "type": "array", "items": { "type": "string" } },
+        "missing": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "description"],
+            "properties": {
+              "id": { "$ref": "#/$defs/slug" },
+              "description": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "limitations": { "type": "array", "items": { "type": "string" } },
+    "cleanup": { "type": "array", "items": { "type": "string" } }
+  },
+  "$defs": {
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_.-]*$",
+      "description": "Lowercase identifier that survives bundle versions."
+    },
+    "confidence": {
+      "enum": ["low", "medium", "high"],
+      "description": "How sure the author is about the entry."
+    },
+    "app": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "summary", "kind"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "summary": { "type": "string", "description": "One paragraph about what the app does." },
+        "kind": { "enum": ["web", "api", "llm_assistant", "worker", "cli"] },
+        "how_to_run": { "type": "string" },
+        "health": { "type": "array", "items": { "type": "string" } },
+        "ports": {
+          "type": "array",
+          "items": { "type": "integer", "minimum": 1, "maximum": 65535 }
+        },
+        "base_paths": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "interface": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind"],
+      "properties": {
+        "id": { "$ref": "#/$defs/slug" },
+        "kind": { "enum": ["http", "sse", "websocket", "graphql", "browser", "webhook", "cli"] },
+        "base_path": { "type": "string" },
+        "auth": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type"],
+          "properties": {
+            "type": { "enum": ["none", "bearer", "header", "cookie", "basic"] },
+            "header": { "type": "string" },
+            "token_source": { "type": "string" }
+          }
+        },
+        "examples": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "request": { "type": "string" },
+              "response": { "type": "string" }
+            }
+          }
+        },
+        "rate_limit": { "type": "string" },
+        "idempotency": { "type": "string" }
+      }
+    },
+    "role": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id"],
+      "properties": {
+        "id": { "$ref": "#/$defs/slug" },
+        "level": { "type": "integer", "minimum": 0 },
+        "description": { "type": "string" },
+        "credential_env": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" }
+      }
+    },
+    "feature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "area", "kind", "description", "interfaces", "roles", "examples"],
+      "properties": {
+        "id": { "$ref": "#/$defs/slug" },
+        "area": { "type": "string" },
+        "kind": { "enum": ["read", "write", "flow", "auth", "admin", "stream", "job"] },
+        "description": { "type": "string" },
+        "interfaces": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/slug" } },
+        "roles": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+        "flag": { "type": "string" },
+        "preconditions": { "type": "array", "items": { "type": "string" } },
+        "examples": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["expected"],
+            "properties": {
+              "ask": { "type": "string" },
+              "request": { "type": "string" },
+              "expected": { "type": "string" },
+              "oracle": { "type": "string" }
+            }
+          }
+        },
+        "invariants": { "type": "array", "items": { "$ref": "#/$defs/slug" } },
+        "cleanup": { "type": "string" },
+        "confidence": { "$ref": "#/$defs/confidence" },
+        "writes_to": { "type": "string" },
+        "confirmation": { "type": "string" },
+        "expect_db": { "type": "string" }
+      }
+    },
+    "environmentVariable": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "kind"],
+      "properties": {
+        "name": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" },
+        "kind": { "enum": ["url", "dsn", "token", "password", "string", "number", "bool"] },
+        "purpose": { "type": "string" },
+        "required": { "type": "boolean" },
+        "interface_ids": { "type": "array", "items": { "$ref": "#/$defs/slug" } }
+      }
+    }
+  }
+}
