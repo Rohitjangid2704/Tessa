@@ -1,0 +1,580 @@
+#!/usr/bin/env node
+"use strict";
+
+const fs = require("node:fs");
+const path = require("node:path");
+const { spawn, spawnSync } = require("node:child_process");
+
+const COMMANDS = ["propose", "discover", "author", "explain", "run"];
+const ITEMS_COMMANDS = ["author", "run"];
+const ALLOWED_TOOLS =
+  "mcp__plugin_tessa_tessa__*,Read,Grep,Glob,Edit,Write,Bash(git *),Bash(npm test*),Bash(uv run*)";
+const DEFAULT_MAX_TURNS = 60;
+const MAX_TURNS_CEILING = 500;
+const DEFAULT_TIMEOUT_MINUTES = 60;
+const TIMEOUT_MINUTES_CEILING = 240;
+const MAX_BUDGET_USD_CEILING = 1000;
+const MAX_STDOUT_BYTES = 8 * 1024 * 1024;
+const STDERR_TAIL_BYTES = 4096;
+const MAX_ARGV_CHARS = 30000;
+const ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
+const MAX_ITEMS = 50;
+const VALUE_FLAGS = [
+  "--target",
+  "--repo",
+  "--finding",
+  "--items",
+  "--max-turns",
+  "--timeout-minutes",
+  "--max-budget-usd",
+];
+
+const RESULT_SCHEMA = {
+  type: "object",
+  properties: {
+    outcome: { type: "string", enum: ["done", "blocked"] },
+    bundle_id: { type: "string" },
+    run_id: { type: "string" },
+    finding_id: { type: "string" },
+    proposal_id: { type: "string" },
+    summary: { type: "string" },
+  },
+  required: ["outcome", "summary"],
+  additionalProperties: false,
+};
+
+const NON_INTERACTIVE_RULES = [
+  "Non-interactive run: nobody is at the keyboard and nobody will answer. Never ask a question and never wait for an answer.",
+  "The command line that started you is the confirmation to start the runs and dry runs that the procedure names for this target. Every other confirmation the procedure asks for is NOT given: filling environment values from a .env file, deploying anything, a branch push, and any write on a production target. When the procedure says to ask, confirm or stop and ask, or when you cannot continue safely, stop at once and finish with outcome blocked and the reason in summary.",
+  "Finish with the structured result only: outcome done when the procedure completed, outcome blocked otherwise; summary is one to three plain sentences; set bundle_id, run_id, finding_id or proposal_id when you created or used one. Never put a token, a password or a secret value in the summary.",
+].join("\n");
+
+const USAGE = [
+  "usage: tessa-loop <propose|discover|author|explain|run> --target <id> --repo <path>",
+  "                      [--finding <id>] [--items <id,id,...>] [--max-turns N]",
+  "                      [--timeout-minutes N] [--max-budget-usd N]",
+  "",
+  "  --finding   required for explain, not allowed elsewhere",
+  "  --items     item ids (author) or scenario ids (run)",
+  "  --max-turns default " + DEFAULT_MAX_TURNS + ", at most " + MAX_TURNS_CEILING,
+  "  --timeout-minutes hard limit for the claude process, default " + DEFAULT_TIMEOUT_MINUTES + ", at most " + TIMEOUT_MINUTES_CEILING,
+  "",
+  "environment: CLAUDE_CODE_OAUTH_TOKEN (from claude setup-token), TESSA_LOOP_CLAUDE_BIN (path of the claude executable)",
+  "exit codes: 0 done, 1 blocked, 2 usage error, transport failure, timeout or claude not found",
+].join("\n");
+
+class UsageError extends Error {}
+
+function parseArguments(argv) {
+  const options = {};
+  let command = null;
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index];
+    if (arg === "-h" || arg === "--help") {
+      return { help: true };
+    }
+    if (arg.startsWith("--")) {
+      const equals = arg.indexOf("=");
+      const flag = equals === -1 ? arg : arg.slice(0, equals);
+      if (!VALUE_FLAGS.includes(flag)) {
+        throw new UsageError("unknown option " + flag);
+      }
+      let value;
+      if (equals === -1) {
+        index += 1;
+        value = argv[index];
+        if (value === undefined) {
+          throw new UsageError(flag + " needs a value");
+        }
+      } else {
+        value = arg.slice(equals + 1);
+      }
+      if (Object.hasOwn(options, flag)) {
+        throw new UsageError(flag + " given twice");
+      }
+      options[flag] = value;
+      continue;
+    }
+    if (command !== null) {
+      throw new UsageError("unexpected argument " + arg);
+    }
+    command = arg;
+  }
+  return { command, options };
+}
+
+function requireId(label, value) {
+  if (!ID_PATTERN.test(value)) {
+    throw new UsageError(label + " must be an id of letters, digits, dot, dash or underscore");
+  }
+  return value;
+}
+
+function parseBoundedInteger(label, value, fallback, ceiling) {
+  if (value === undefined) {
+    return fallback;
+  }
+  if (!/^[0-9]{1,6}$/.test(value) || Number(value) < 1 || Number(value) > ceiling) {
+    throw new UsageError(label + " must be an integer from 1 to " + ceiling);
+  }
+  return Number(value);
+}
+
+function validateRequest(parsed) {
+  const { command, options } = parsed;
+  if (!COMMANDS.includes(command)) {
+    throw new UsageError("the first argument must be one of " + COMMANDS.join(", "));
+  }
+  if (options["--target"] === undefined) {
+    throw new UsageError("--target is required");
+  }
+  if (options["--repo"] === undefined) {
+    throw new UsageError("--repo is required");
+  }
+  const target = requireId("--target", options["--target"]);
+  let finding = null;
+  if (command === "explain") {
+    if (options["--finding"] === undefined) {
+      throw new UsageError("explain needs --finding");
+    }
+    finding = requireId("--finding", options["--finding"]);
+  } else if (options["--finding"] !== undefined) {
+    throw new UsageError("--finding is only for explain");
+  }
+  let items = [];
+  if (options["--items"] !== undefined) {
+    if (!ITEMS_COMMANDS.includes(command)) {
+      throw new UsageError("--items is only for " + ITEMS_COMMANDS.join(" and "));
+    }
+    items = options["--items"].split(",").map((item) => requireId("--items entry", item));
+    if (items.length > MAX_ITEMS) {
+      throw new UsageError("--items takes at most " + MAX_ITEMS + " ids");
+    }
+  }
+  const repo = path.resolve(options["--repo"]);
+  let isDirectory = false;
+  try {
+    isDirectory = fs.statSync(repo).isDirectory();
+  } catch {
+    isDirectory = false;
+  }
+  if (!isDirectory) {
+    throw new UsageError("--repo is not a directory: " + repo);
+  }
+  const maxTurns = parseBoundedInteger("--max-turns", options["--max-turns"], DEFAULT_MAX_TURNS, MAX_TURNS_CEILING);
+  let timeoutMinutes = DEFAULT_TIMEOUT_MINUTES;
+  if (options["--timeout-minutes"] !== undefined) {
+    const raw = options["--timeout-minutes"];
+    if (!/^[0-9]{1,3}(\.[0-9]{1,2})?$/.test(raw) || Number(raw) < 0.01 || Number(raw) > TIMEOUT_MINUTES_CEILING) {
+      throw new UsageError("--timeout-minutes must be a number from 0.01 to " + TIMEOUT_MINUTES_CEILING);
+    }
+    timeoutMinutes = Number(raw);
+  }
+  let maxBudgetUsd = null;
+  if (options["--max-budget-usd"] !== undefined) {
+    const raw = options["--max-budget-usd"];
+    if (!/^[0-9]{1,4}(\.[0-9]{1,2})?$/.test(raw) || Number(raw) <= 0 || Number(raw) > MAX_BUDGET_USD_CEILING) {
+      throw new UsageError("--max-budget-usd must be a positive amount up to " + MAX_BUDGET_USD_CEILING);
+    }
+    maxBudgetUsd = raw;
+  }
+  return { command, target, finding, items, repo, maxTurns, timeoutMinutes, maxBudgetUsd };
+}
+
+function stripFrontmatter(text) {
+  const normalized = text.replace(/\r\n/g, "\n");
+  if (!normalized.startsWith("---\n")) {
+    return normalized.trim();
+  }
+  const end = normalized.indexOf("\n---\n", 4);
+  if (end === -1) {
+    return normalized.trim();
+  }
+  return normalized.slice(end + 5).trim();
+}
+
+function skillArguments(request) {
+  if (request.command === "explain") {
+    return request.finding;
+  }
+  if (request.items.length > 0) {
+    return request.target + " " + request.items.join(",");
+  }
+  return request.target;
+}
+
+function readSkill(pluginRoot, request) {
+  const directory = path.join(pluginRoot, "skills", request.command);
+  const skillPath = path.join(directory, "SKILL.md");
+  if (!fs.existsSync(skillPath)) {
+    throw new UsageError("skill file not found: " + skillPath);
+  }
+  const argumentsText = skillArguments(request);
+  const body = stripFrontmatter(fs.readFileSync(skillPath, "utf8")).split("$ARGUMENTS").join(argumentsText);
+  const referencePath = path.join(directory, "reference.md");
+  const reference = fs.existsSync(referencePath)
+    ? "\n\n# reference.md of this skill\n\n" + stripFrontmatter(fs.readFileSync(referencePath, "utf8"))
+    : "";
+  return body + reference;
+}
+
+function buildSystemPrompt(pluginRoot, request) {
+  return [
+    "You are running the Tessa `" + request.command + "` skill headlessly. The procedure follows with its arguments already filled in.",
+    readSkill(pluginRoot, request),
+    "---",
+    NON_INTERACTIVE_RULES,
+  ].join("\n\n");
+}
+
+function buildUserPrompt(request) {
+  const lines = [
+    "Run the Tessa " + request.command + " procedure from your instructions now.",
+    "Target: " + request.target,
+  ];
+  if (request.finding !== null) {
+    lines.push("Finding: " + request.finding);
+  }
+  if (request.items.length > 0) {
+    lines.push("Ids: " + request.items.join(","));
+  }
+  lines.push("The repository is the current working directory.");
+  lines.push("Finish with the structured result.");
+  return lines.join("\n") + "\n";
+}
+
+function buildClaudeArguments(request, systemPrompt) {
+  const args = [
+    "-p",
+    "--append-system-prompt",
+    systemPrompt,
+    "--allowedTools",
+    ALLOWED_TOOLS,
+    "--permission-mode",
+    "acceptEdits",
+    "--max-turns",
+    String(request.maxTurns),
+    "--output-format",
+    "json",
+    "--json-schema",
+    JSON.stringify(RESULT_SCHEMA),
+  ];
+  if (request.maxBudgetUsd !== null) {
+    args.push("--max-budget-usd", request.maxBudgetUsd);
+  }
+  return args;
+}
+
+function launchFor(executable, platform) {
+  const extension = path.extname(executable).toLowerCase();
+  if (extension === ".js" || extension === ".cjs" || extension === ".mjs") {
+    return { file: process.execPath, prefix: [executable] };
+  }
+  if (platform === "win32" && (extension === ".cmd" || extension === ".bat")) {
+    const shim = fs.readFileSync(executable, "utf8");
+    const match = /"%dp0%[\\/]+([^"]+?\.exe)"/i.exec(shim);
+    if (match !== null) {
+      const target = path.join(path.dirname(executable), match[1].replace(/\\/g, path.sep));
+      if (fs.existsSync(target)) {
+        return { file: target, prefix: [] };
+      }
+    }
+    throw new UsageError(
+      "cannot run " + executable + " without a shell; set TESSA_LOOP_CLAUDE_BIN to the claude.exe it points at",
+    );
+  }
+  return { file: executable, prefix: [] };
+}
+
+function resolveClaude(environment, platform) {
+  const override = environment.TESSA_LOOP_CLAUDE_BIN;
+  if (override !== undefined && override !== "") {
+    const resolved = path.resolve(override);
+    if (!fs.existsSync(resolved) || !fs.statSync(resolved).isFile()) {
+      throw new UsageError("TESSA_LOOP_CLAUDE_BIN is not a file: " + resolved);
+    }
+    return launchFor(resolved, platform);
+  }
+  const names = platform === "win32" ? ["claude.exe", "claude.cmd"] : ["claude"];
+  const pathValue = environment.PATH ?? environment.Path ?? "";
+  const directories = pathValue.split(platform === "win32" ? ";" : ":").filter((entry) => entry !== "");
+  for (const directory of directories) {
+    for (const name of names) {
+      const candidate = path.join(directory.replace(/^"|"$/g, ""), name);
+      try {
+        if (fs.statSync(candidate).isFile()) {
+          return launchFor(candidate, platform);
+        }
+      } catch {
+        continue;
+      }
+    }
+  }
+  throw new UsageError("claude was not found on PATH; install Claude Code or set TESSA_LOOP_CLAUDE_BIN");
+}
+
+function redactor(environment) {
+  const secrets = [environment.CLAUDE_CODE_OAUTH_TOKEN, environment.ANTHROPIC_API_KEY]
+    .filter((value) => typeof value === "string" && value.length >= 8)
+    .sort((left, right) => right.length - left.length);
+  return (text) => {
+    let result = String(text);
+    for (const secret of secrets) {
+      result = result.split(secret).join("[redacted]");
+    }
+    return result
+      .replace(/\bipt_[A-Za-z0-9_-]+/g, "[redacted]")
+      .replace(/\bsk-ant-[A-Za-z0-9_-]+/g, "[redacted]")
+      .replace(/(bearer\s+)[A-Za-z0-9._~+/=-]{8,}/gi, "$1[redacted]");
+  };
+}
+
+function killTree(child) {
+  if (child.pid === undefined) {
+    return;
+  }
+  if (process.platform === "win32") {
+    spawnSync("taskkill", ["/PID", String(child.pid), "/T", "/F"], { stdio: "ignore", windowsHide: true });
+    return;
+  }
+  try {
+    process.kill(-child.pid, "SIGKILL");
+  } catch {
+    child.kill("SIGKILL");
+  }
+}
+
+function runChild(launch, claudeArguments, input, cwd, environment, timeoutMs) {
+  return new Promise((resolve) => {
+    let child;
+    try {
+      child = spawn(launch.file, [...launch.prefix, ...claudeArguments], {
+        cwd,
+        env: environment,
+        shell: false,
+        windowsHide: true,
+        detached: process.platform !== "win32",
+        stdio: ["pipe", "pipe", "pipe"],
+      });
+    } catch (error) {
+      resolve({ spawnError: error, stdout: "", stderr: "", code: null, timedOut: false });
+      return;
+    }
+    const stdoutChunks = [];
+    let stdoutBytes = 0;
+    let stdoutOverflow = false;
+    let stderrTail = "";
+    let timedOut = false;
+    let settled = false;
+    const finish = (result) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      clearTimeout(timer);
+      process.removeListener("SIGINT", onSignal);
+      process.removeListener("SIGTERM", onSignal);
+      resolve(result);
+    };
+    const timer = setTimeout(() => {
+      timedOut = true;
+      killTree(child);
+    }, timeoutMs);
+    const onSignal = () => {
+      killTree(child);
+      process.exitCode = 2;
+    };
+    process.once("SIGINT", onSignal);
+    process.once("SIGTERM", onSignal);
+    child.stdout.on("data", (chunk) => {
+      stdoutBytes += chunk.length;
+      if (stdoutBytes > MAX_STDOUT_BYTES) {
+        stdoutOverflow = true;
+        killTree(child);
+        return;
+      }
+      stdoutChunks.push(chunk);
+    });
+    child.stderr.on("data", (chunk) => {
+      stderrTail = (stderrTail + chunk.toString("utf8")).slice(-STDERR_TAIL_BYTES);
+    });
+    child.on("error", (error) => {
+      finish({ spawnError: error, stdout: "", stderr: stderrTail, code: null, timedOut });
+    });
+    child.on("close", (code) => {
+      finish({
+        stdout: Buffer.concat(stdoutChunks).toString("utf8"),
+        stderr: stderrTail,
+        code,
+        timedOut,
+        stdoutOverflow,
+      });
+    });
+    child.stdin.on("error", () => undefined);
+    child.stdin.end(input);
+  });
+}
+
+function parseClaudeOutput(stdout) {
+  const text = stdout.trim();
+  if (text === "") {
+    return null;
+  }
+  try {
+    const parsed = JSON.parse(text);
+    if (Array.isArray(parsed)) {
+      const last = parsed.filter((entry) => entry && entry.type === "result").pop();
+      return last ?? null;
+    }
+    return parsed !== null && typeof parsed === "object" ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function sanitizeResult(structured) {
+  if (structured === null || typeof structured !== "object" || Array.isArray(structured)) {
+    return null;
+  }
+  if (structured.outcome !== "done" && structured.outcome !== "blocked") {
+    return null;
+  }
+  if (typeof structured.summary !== "string") {
+    return null;
+  }
+  const result = { outcome: structured.outcome };
+  for (const key of ["bundle_id", "run_id", "finding_id", "proposal_id"]) {
+    if (typeof structured[key] === "string" && structured[key] !== "") {
+      result[key] = structured[key];
+    }
+  }
+  result.summary = structured.summary.slice(0, 2000);
+  return result;
+}
+
+function interpret(output, redact) {
+  const cost = typeof output.total_cost_usd === "number" ? output.total_cost_usd : null;
+  const sessionId = typeof output.session_id === "string" ? output.session_id : null;
+  const finalize = (result) => {
+    const body = { ...result, total_cost_usd: cost };
+    if (sessionId !== null) {
+      body.session_id = sessionId;
+    }
+    return body;
+  };
+  const subtype = typeof output.subtype === "string" ? output.subtype : "";
+  if (output.is_error === true && !subtype.startsWith("error_max_")) {
+    const reason = typeof output.result === "string" ? output.result : "claude reported an error";
+    return { exitCode: 2, error: redact("claude failed: " + reason.slice(0, 500)) };
+  }
+  if (subtype.startsWith("error_max_")) {
+    return {
+      exitCode: 1,
+      body: finalize({
+        outcome: "blocked",
+        summary: "claude stopped before finishing (" + subtype.slice("error_".length) + ")",
+      }),
+    };
+  }
+  const result = sanitizeResult(output.structured_output);
+  if (result === null) {
+    const text = typeof output.result === "string" ? output.result.trim().slice(0, 300) : "";
+    return {
+      exitCode: 1,
+      body: finalize({
+        outcome: "blocked",
+        summary: "claude returned no valid structured result" + (text === "" ? "" : ": " + text),
+      }),
+    };
+  }
+  result.summary = redact(result.summary);
+  return { exitCode: result.outcome === "done" ? 0 : 1, body: finalize(result) };
+}
+
+async function main(argv, environment, platform, pluginRoot) {
+  const redact = redactor(environment);
+  let request;
+  let launch;
+  let systemPrompt;
+  try {
+    const parsed = parseArguments(argv);
+    if (parsed.help) {
+      process.stdout.write(USAGE + "\n");
+      return 0;
+    }
+    request = validateRequest(parsed);
+    launch = resolveClaude(environment, platform);
+    systemPrompt = buildSystemPrompt(pluginRoot, request);
+  } catch (error) {
+    if (error instanceof UsageError) {
+      process.stderr.write("tessa-loop: " + redact(error.message) + "\n\n" + USAGE + "\n");
+      return 2;
+    }
+    throw error;
+  }
+  const claudeArguments = buildClaudeArguments(request, systemPrompt);
+  const argumentChars = claudeArguments.reduce((total, entry) => total + entry.length + 3, 0);
+  if (argumentChars > MAX_ARGV_CHARS) {
+    process.stderr.write("tessa-loop: the skill text is too long for one command line\n");
+    return 2;
+  }
+  if (environment.ANTHROPIC_API_KEY) {
+    process.stderr.write("tessa-loop: ANTHROPIC_API_KEY is set; claude bills it instead of your subscription\n");
+  }
+  const outcome = await runChild(
+    launch,
+    claudeArguments,
+    buildUserPrompt(request),
+    request.repo,
+    environment,
+    Math.round(request.timeoutMinutes * 60 * 1000),
+  );
+  if (outcome.spawnError) {
+    process.stderr.write("tessa-loop: cannot start claude: " + redact(outcome.spawnError.message) + "\n");
+    return 2;
+  }
+  if (outcome.timedOut) {
+    process.stderr.write("tessa-loop: timed out after " + request.timeoutMinutes + " minutes\n");
+    return 2;
+  }
+  if (outcome.stdoutOverflow) {
+    process.stderr.write("tessa-loop: claude output exceeded the size limit\n");
+    return 2;
+  }
+  const output = parseClaudeOutput(outcome.stdout);
+  if (output === null) {
+    const detail = outcome.stderr.trim() === "" ? "" : ": " + redact(outcome.stderr.trim().slice(-500));
+    process.stderr.write("tessa-loop: claude exited with code " + outcome.code + " and no JSON result" + detail + "\n");
+    return 2;
+  }
+  const verdict = interpret(output, redact);
+  if (verdict.error !== undefined) {
+    process.stderr.write("tessa-loop: " + verdict.error + "\n");
+    return verdict.exitCode;
+  }
+  process.stdout.write(JSON.stringify(verdict.body) + "\n");
+  return verdict.exitCode;
+}
+
+module.exports = {
+  ALLOWED_TOOLS,
+  DEFAULT_MAX_TURNS,
+  RESULT_SCHEMA,
+  UsageError,
+  parseArguments,
+  resolveClaude,
+  stripFrontmatter,
+  validateRequest,
+};
+
+if (require.main === module) {
+  main(process.argv.slice(2), process.env, process.platform, path.resolve(__dirname, "..")).then(
+    (code) => {
+      process.exitCode = code;
+    },
+    (error) => {
+      process.stderr.write("tessa-loop: unexpected error: " + (error && error.message ? error.message : String(error)) + "\n");
+      process.exitCode = 2;
+    },
+  );
+}

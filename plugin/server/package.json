@@ -1,0 +1,33 @@
+{
+  "name": "tessa-mcp-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.20.0"
+  },
+  "scripts": {
+    "api:types": "openapi-typescript ../../api/openapi.json -o src/api.d.ts",
+    "typecheck": "tsc --noEmit",
+    "build": "node scripts/build.mjs",
+    "validate": "claude plugin validate --strict .. && claude plugin validate --strict ../..",
+    "test": "vitest run && npm run validate",
+    "test:runner": "vitest run tests/runner.test.ts",
+    "e2e:real": "node e2e/real.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.1",
+    "fflate": "0.8.3",
+    "openapi-fetch": "0.17.0",
+    "yaml": "2.9.1",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.1",
+    "esbuild": "0.28.2",
+    "msw": "2.15.0",
+    "openapi-typescript": "7.13.0",
+    "typescript": "5.9.3",
+    "vitest": "5.0.3"
+  }
+}

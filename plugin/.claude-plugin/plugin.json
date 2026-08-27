@@ -1,0 +1,42 @@
+{
+  "name": "tessa",
+  "version": "0.1.0",
+  "description": "Drive the Tessa QA harness from Claude Code: connect, discover a target, run scenarios, explain findings.",
+  "author": {
+    "name": "Tessa"
+  },
+  "channels": [
+    {
+      "server": "tessa",
+      "displayName": "Tessa"
+    }
+  ],
+  "userConfig": {
+    "api_url": {
+      "type": "string",
+      "title": "Tessa API URL",
+      "description": "Base URL of the Tessa API, for example http://localhost:8000",
+      "required": true
+    },
+    "api_token": {
+      "type": "string",
+      "title": "Tessa personal token",
+      "description": "Personal token minted on the Tessa page Settings, Tokens. It starts with ipt_ and is stored in the OS credential store.",
+      "sensitive": true,
+      "required": true
+    },
+    "watch_targets": {
+      "type": "string",
+      "title": "Targets to watch",
+      "description": "Target ids whose findings and runs should reach this session. Optional.",
+      "multiple": true,
+      "required": false
+    },
+    "channel": {
+      "type": "boolean",
+      "title": "Push channel",
+      "description": "Turn on the push channel (research preview, needs the development channels flag).",
+      "default": false
+    }
+  }
+}

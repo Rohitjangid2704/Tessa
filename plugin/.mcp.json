@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "tessa": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/server/dist/server.cjs"],
+      "env": {
+        "TESSA_URL": "${user_config.api_url}",
+        "TESSA_TOKEN": "${user_config.api_token}",
+        "TESSA_WATCH": "${user_config.watch_targets}",
+        "TESSA_CHANNEL": "${user_config.channel}"
+      },
+      "timeout": 1800000
+    }
+  }
+}
