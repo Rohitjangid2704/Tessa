@@ -1,0 +1,24 @@
+schema_version: 1
+id: smoke-dirty-filter
+title: The dirty filter returns exactly the rooms the database counts as dirty
+feature_id: rooms.read.list
+family: rooms
+role: staff
+interface_id: api
+steps:
+  - adapter: http
+    label: Staff lists the dirty rooms
+    gold_from:
+      oracle: dirty_rooms
+    request:
+      method: GET
+      path: /rooms
+      query:
+        status: dirty
+    expect:
+      status: [200]
+      fields:
+        - path: total
+          equals: ${gold.dirty_count}
+        - path: items[0].status
+          equals: dirty

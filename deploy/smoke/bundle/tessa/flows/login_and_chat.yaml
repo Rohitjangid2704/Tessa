@@ -1,0 +1,33 @@
+id: login_and_chat
+title: Sign in and ask about the open maintenance issues
+feature_ids: [auth.login.staff, maintenance.read.open_issues]
+role: staff
+steps:
+  - action: goto
+    url: /login
+    expect:
+      url: /login
+  - action: fill
+    target:
+      role: textbox
+      name: Email
+    value: ${STAFF_EMAIL}
+  - action: fill
+    target:
+      selector: "[data-testid=password]"
+    value: ${STAFF_PASSWORD}
+  - action: click
+    target:
+      role: button
+      name: Sign in
+    expect:
+      url: /chat
+      text: [Chat]
+  - action: fill
+    target:
+      selector: "[data-testid=chat-input]"
+    value: Which maintenance issues are still open?
+  - action: press
+    value: Enter
+    expect:
+      text: ["3 maintenance issues are open across 2 rooms"]

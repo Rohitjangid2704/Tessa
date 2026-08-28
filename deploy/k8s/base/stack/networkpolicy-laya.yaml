@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: tessa-laya-ingress
+  labels:
+    app.kubernetes.io/name: tessa-laya
+    app.kubernetes.io/component: laya
+    app.kubernetes.io/part-of: tessa
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: tessa-laya
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: tessa-api
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: tessa-worker
+      ports:
+        - protocol: TCP
+          port: 7006

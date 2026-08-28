@@ -1,0 +1,12 @@
+name: busiest_room
+feature_ids: [maintenance.read.open_issues]
+language: sql
+truth_source: primary_db
+params_schema:
+  type: object
+  properties: {}
+sentence_template: >-
+  Room {{ rows[0].room }} has the most open maintenance issues.
+gold_points:
+  - key: top_room
+    expression: rows[0].room

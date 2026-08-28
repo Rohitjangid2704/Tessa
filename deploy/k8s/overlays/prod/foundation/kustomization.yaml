@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../../base/foundation
+configMapGenerator:
+  - name: tessa-api-config
+    behavior: merge
+    literals:
+      - TESSA_TEMPORAL_UI_URL=https://temporal.example.com
+      - TESSA_PUBLIC_API_URL=https://tessa-api.example.com
+      - TESSA_CORS_ORIGINS=https://tessa.example.com
+      - TESSA_REPORT_BASE_URL=https://tessa.example.com
+      - TESSA_METRICS_ENABLED=true
+  - name: tessa-worker-config
+    behavior: merge
+    literals:
+      - TESSA_REPORT_BASE_URL=https://tessa.example.com
+      - TESSA_METRICS_ENABLED=true

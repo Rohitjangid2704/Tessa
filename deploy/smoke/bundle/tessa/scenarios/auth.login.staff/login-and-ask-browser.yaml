@@ -1,0 +1,49 @@
+schema_version: 1
+id: smoke-browser-login
+title: Staff signs in on the login page and asks the chat
+feature_id: auth.login.staff
+family: auth
+role: staff
+interface_id: browser
+timeout_seconds: 240
+steps:
+  - adapter: browser
+    action: goto
+    url: /login
+    expect:
+      dom_state:
+        url: /login
+        visible:
+          - role: button
+            name: Sign in
+  - adapter: browser
+    action: fill
+    target:
+      role: textbox
+      name: Email
+    value: ${STAFF_EMAIL}
+  - adapter: browser
+    action: fill
+    target:
+      selector: "[data-testid=password]"
+    value: ${STAFF_PASSWORD}
+  - adapter: browser
+    action: click
+    target:
+      role: button
+      name: Sign in
+    expect:
+      dom_state:
+        url: /chat
+  - adapter: browser
+    action: fill
+    target:
+      selector: "[data-testid=chat-input]"
+    value: Which maintenance issues are still open?
+  - adapter: browser
+    action: press
+    value: Enter
+    expect:
+      dom_state:
+        text_contains:
+          - most of them in room 20003

@@ -1,0 +1,52 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tessa-api
+  labels:
+    app.kubernetes.io/name: tessa-api
+    app.kubernetes.io/component: api
+    app.kubernetes.io/part-of: tessa
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: 64m
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "15"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - tessa-api.example.com
+      secretName: tessa-api-tls
+  rules:
+    - host: tessa-api.example.com
+      http:
+        paths:
+          - path: /api/v1
+            pathType: Prefix
+            backend:
+              service:
+                name: tessa-api
+                port:
+                  name: http
+          - path: /ws/v1
+            pathType: Prefix
+            backend:
+              service:
+                name: tessa-api
+                port:
+                  name: http
+          - path: /schemas
+            pathType: Prefix
+            backend:
+              service:
+                name: tessa-api
+                port:
+                  name: http
+          - path: /health
+            pathType: Prefix
+            backend:
+              service:
+                name: tessa-api
+                port:
+                  name: http

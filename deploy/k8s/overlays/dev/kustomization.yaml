@@ -1,0 +1,23 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: tessa
+resources:
+  - foundation
+  - ../../base/stack
+components:
+  - ../../components/data-volume
+images:
+  - name: tessa-api
+    newTag: dev
+  - name: tessa-worker
+    newTag: dev
+  - name: tessa-laya
+    newTag: dev
+patches:
+  - path: patches/data-volume-access-mode.yaml
+    target:
+      kind: PersistentVolumeClaim
+      name: tessa-data
+  - path: patches/laya-small.yaml
+  - path: patches/worker-small.yaml
+  - path: patches/worker-network-open.yaml

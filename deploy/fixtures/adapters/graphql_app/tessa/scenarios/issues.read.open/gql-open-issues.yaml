@@ -1,0 +1,35 @@
+schema_version: 1
+id: gql-open-issues
+title: Viewer lists the open issues
+feature_id: issues.read.open
+family: issues-read
+role: viewer
+interface_id: graphql_api
+steps:
+  - adapter: graphql
+    label: Open issues through a variable
+    operation_name: OpenIssues
+    query: |
+      query OpenIssues($status: IssueStatus) {
+        issues(status: $status) {
+          id
+          room
+          title
+          status
+        }
+      }
+    variables:
+      status: OPEN
+    expect:
+      status: 200
+      fields:
+        - path: data.issues
+          type: array
+          min_length: 1
+        - path: data.issues[0].status
+          equals: OPEN
+        - path: data.issues[0].title
+          type: string
+      latency:
+        max_ms: 2000
+      free_text: The open maintenance issues with their rooms

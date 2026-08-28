@@ -1,0 +1,107 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tessa-laya
+  labels:
+    app.kubernetes.io/name: tessa-laya
+    app.kubernetes.io/component: laya
+    app.kubernetes.io/part-of: tessa
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: tessa-laya
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: tessa-laya
+        app.kubernetes.io/component: laya
+        app.kubernetes.io/part-of: tessa
+    spec:
+      serviceAccountName: tessa-laya
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: laya
+          image: tessa-laya:replaced-by-overlay
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 7006
+              protocol: TCP
+          env:
+            - name: LAYA_HOST
+              value: 0.0.0.0
+            - name: LAYA_PORT
+              value: "7006"
+            - name: LAYA_DEVICE
+              value: cpu
+            - name: LAYA_PRELOAD
+              value: "1"
+            - name: LAYA_MODELS
+              value: english,multilingual,typed-decisions
+            - name: LAYA_THREADS
+              value: "4"
+            - name: LAYA_MAX_CONCURRENT
+              value: "16"
+            - name: HF_HOME
+              value: /models/hf
+            - name: HOME
+              value: /tmp
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 120
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 6
+          resources:
+            requests:
+              cpu: "2"
+              memory: 6Gi
+            limits:
+              cpu: "4"
+              memory: 8Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: models
+              mountPath: /models
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: models
+          persistentVolumeClaim:
+            claimName: tessa-laya-models
+        - name: tmp
+          emptyDir:
+            sizeLimit: 1Gi

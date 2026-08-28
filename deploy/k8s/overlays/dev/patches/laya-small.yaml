@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tessa-laya
+spec:
+  template:
+    spec:
+      containers:
+        - name: laya
+          env:
+            - name: LAYA_MODELS
+              value: english
+            - name: LAYA_THREADS
+              value: "2"
+          resources:
+            requests:
+              cpu: "1"
+              memory: 3Gi
+            limits:
+              cpu: "2"
+              memory: 4Gi

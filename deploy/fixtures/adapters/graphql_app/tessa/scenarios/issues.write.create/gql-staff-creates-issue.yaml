@@ -1,0 +1,47 @@
+schema_version: 1
+id: gql-staff-creates-issue
+title: Staff creates an issue and finds it among the open issues
+feature_id: issues.write.create
+family: issues-write
+role: staff
+interface_id: graphql_api
+steps:
+  - adapter: graphql
+    label: Create the issue
+    operation_name: CreateIssue
+    query: |
+      mutation CreateIssue($input: CreateIssueInput!) {
+        createIssue(input: $input) {
+          id
+          room
+          title
+          status
+        }
+      }
+    variables:
+      input:
+        room: "30003"
+        title: Tessa fixture issue
+    expect:
+      status: 200
+      fields:
+        - path: data.createIssue.status
+          equals: OPEN
+        - path: data.createIssue.title
+          equals: Tessa fixture issue
+        - path: data.createIssue.room
+          equals: "30003"
+  - adapter: graphql
+    label: The new issue is listed
+    query: |
+      query {
+        issues(status: OPEN) {
+          title
+        }
+      }
+    expect:
+      status: 200
+      fields:
+        - path: data.issues
+          type: array
+          min_length: 4

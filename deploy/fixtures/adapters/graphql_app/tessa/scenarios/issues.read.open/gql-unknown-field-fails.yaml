@@ -1,0 +1,26 @@
+schema_version: 1
+id: gql-unknown-field-fails
+title: Query asks for a field the schema does not have (fails by design)
+feature_id: issues.read.open
+family: issues-read
+role: viewer
+interface_id: graphql_api
+steps:
+  - adapter: graphql
+    label: Select the assignee of each issue
+    operation_name: IssuesWithAssignee
+    query: |
+      query IssuesWithAssignee {
+        issues(status: OPEN) {
+          id
+          title
+          assignee
+        }
+      }
+    expect:
+      status: 200
+      fields:
+        - path: data.issues
+          type: array
+          min_length: 1
+      free_text: The schema has no assignee field, so the server answers with a validation error

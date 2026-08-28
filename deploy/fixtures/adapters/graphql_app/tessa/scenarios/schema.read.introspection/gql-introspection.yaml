@@ -1,0 +1,29 @@
+schema_version: 1
+id: gql-introspection
+title: Introspection names the query and mutation types
+feature_id: schema.read.introspection
+family: schema-read
+role: viewer
+interface_id: graphql_api
+steps:
+  - adapter: graphql
+    label: Introspect the root types
+    operation_name: Introspect
+    query: |
+      query Introspect {
+        __schema {
+          queryType {
+            name
+          }
+          mutationType {
+            name
+          }
+        }
+      }
+    expect:
+      status: 200
+      fields:
+        - path: data.__schema.queryType.name
+          equals: Query
+        - path: data.__schema.mutationType.name
+          equals: Mutation

@@ -1,0 +1,18 @@
+schema_version: 1
+id: ws-poison-expected-healthy-fails
+title: Poisoned message expected to leave the connection healthy (fails by design)
+feature_id: echo.stream.policy_close
+family: echo-negative
+role: member
+interface_id: echo_ws
+steps:
+  - adapter: websocket
+    label: Send the poisoned message and expect a normal connection
+    messages:
+      - at_ms: 0
+        data:
+          type: poison
+    listen_ms: 500
+    expect:
+      min_messages: 2
+      free_text: The server must keep answering after the poisoned message, which it does not

@@ -1,0 +1,146 @@
+schema: http://localhost:8000/schemas/bundle.v1.json
+target_token: tgt_graphqlfixture22222222
+app:
+  name: GraphQL Fixture
+  summary: >-
+    A tiny GraphQL over HTTP server used to test the Tessa graphql adapter. It serves a
+    hotel dataset of 8 rooms and 5 maintenance issues with queries, two mutations and full
+    introspection. Staff may mutate, viewers may only read, and a missing token is a 401.
+  kind: api
+  how_to_run: >-
+    From the deploy folder: uv run --project ../worker python -m fixtures.adapters.graphql_app
+    --port 8521
+  health_endpoints:
+    - GET /health
+  ports: [8521]
+  base_paths: [/graphql]
+interfaces:
+  - id: graphql_api
+    kind: graphql
+    base_path: /graphql
+    auth:
+      type: bearer
+      header: Authorization
+      token_source:
+        staff: ${GRAPHQL_STAFF_TOKEN}
+        viewer: ${GRAPHQL_VIEWER_TOKEN}
+    health_endpoint: /health
+    shapes:
+      - name: list open issues
+        method: POST
+        path: /
+        request_example:
+          operationName: OpenIssues
+          query: "query OpenIssues($status: IssueStatus) { issues(status: $status) { id title } }"
+          variables:
+            status: OPEN
+        response_example:
+          data:
+            issues:
+              - id: "1"
+                title: Shower leaks
+    rate_limits: none
+    idempotency: none
+roles:
+  - id: staff
+    level: 2
+    description: Staff member who reads and changes maintenance issues
+    can_see: [rooms, maintenance issues]
+    can_do: [create maintenance issues, resolve maintenance issues]
+    credential_env: GRAPHQL_STAFF_TOKEN
+  - id: viewer
+    level: 1
+    description: Read-only user
+    can_see: [rooms, maintenance issues]
+    can_do: []
+    credential_env: GRAPHQL_VIEWER_TOKEN
+features:
+  - id: issues.read.open
+    area: Maintenance
+    kind: read
+    description: List the maintenance issues that are still open
+    interfaces: [graphql_api]
+    roles: [all]
+    examples:
+      - request:
+          query: "query { issues(status: OPEN) { id room title status } }"
+        expected: 3 open issues, 2 of them in room 20003
+    confidence: high
+  - id: schema.read.introspection
+    area: Schema
+    kind: read
+    description: Clients read the schema through introspection
+    interfaces: [graphql_api]
+    roles: [all]
+    examples:
+      - request:
+          query: "query { __schema { queryType { name } } }"
+        expected: The query type is named Query and the mutation type Mutation
+    confidence: high
+  - id: issues.write.create
+    area: Maintenance
+    kind: write
+    description: Staff create a maintenance issue for a room
+    interfaces: [graphql_api]
+    roles: [staff]
+    examples:
+      - request:
+          query: "mutation { createIssue(input: {room: \"30003\", title: \"Broken lamp\"}) { id } }"
+        expected: The new issue is open and listed with the open issues
+    cleanup: restore the dataset with POST /qa/reset
+    confidence: high
+    writes_to: issue
+  - id: issues.auth.mutation_roles
+    area: Maintenance
+    kind: auth
+    description: A viewer cannot create or resolve issues
+    interfaces: [graphql_api]
+    roles: [viewer]
+    examples:
+      - request:
+          query: "mutation { resolveIssue(id: \"1\") { id } }"
+        expected: An error saying not authorized and no data
+    confidence: high
+  - id: issues.auth.token_required
+    area: Maintenance
+    kind: auth
+    description: A request without a bearer token is answered with 401
+    interfaces: [graphql_api]
+    roles: [all]
+    examples:
+      - request:
+          query: "query { viewer }"
+        expected: Status 401 and an unauthenticated error
+    confidence: high
+invariants: []
+environment:
+  - name: GRAPHQL_FIXTURE_URL
+    kind: url
+    secret: false
+    required: true
+    purpose: Origin of the GraphQL fixture
+    interfaces: [graphql_api]
+  - name: GRAPHQL_STAFF_TOKEN
+    kind: token
+    secret: true
+    required: true
+    purpose: Bearer token of the staff role
+    interfaces: [graphql_api]
+  - name: GRAPHQL_VIEWER_TOKEN
+    kind: token
+    secret: true
+    required: true
+    purpose: Bearer token of the viewer role
+    interfaces: [graphql_api]
+test_hooks:
+  available:
+    - id: health
+      description: Health probe
+      endpoint: GET /health
+    - id: reset
+      description: Restore the seeded dataset
+      endpoint: POST /qa/reset
+limitations:
+  - Subscriptions are not supported
+cleanup:
+  delete_after_run: [maintenance issues created by the suite]

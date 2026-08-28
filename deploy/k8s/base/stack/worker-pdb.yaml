@@ -1,0 +1,13 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: tessa-worker
+  labels:
+    app.kubernetes.io/name: tessa-worker
+    app.kubernetes.io/component: worker
+    app.kubernetes.io/part-of: tessa
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: tessa-worker

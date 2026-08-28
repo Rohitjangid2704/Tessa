@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: tessa-api
+  labels:
+    app.kubernetes.io/name: tessa-api
+    app.kubernetes.io/component: api
+    app.kubernetes.io/part-of: tessa
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: tessa-api
+  ports:
+    - name: http
+      port: 8000
+      targetPort: http
+      protocol: TCP

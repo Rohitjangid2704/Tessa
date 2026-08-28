@@ -1,0 +1,23 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../../base/foundation
+configMapGenerator:
+  - name: tessa-api-config
+    behavior: merge
+    literals:
+      - TESSA_ENV=dev
+      - TESSA_LOG_LEVEL=debug
+      - TESSA_DOCS_ENABLED=true
+      - TESSA_PUBLIC_API_URL=http://localhost:8000
+      - TESSA_CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+      - TESSA_TEMPORAL_UI_URL=http://localhost:8233
+      - TESSA_REPORT_BASE_URL=http://localhost:3000
+  - name: tessa-worker-config
+    behavior: merge
+    literals:
+      - TESSA_ENV=dev
+      - TESSA_LOG_LEVEL=debug
+      - TESSA_REPORT_BASE_URL=http://localhost:3000
+      - TESSA_BROWSER_MAX_CONTEXTS=2
+      - TESSA_WORKER_MAX_CONCURRENT_ACTIVITIES=8

@@ -1,0 +1,24 @@
+schema_version: 1
+id: smoke-open-issues-chat
+title: Staff asks the chat which maintenance issues are open
+feature_id: maintenance.read.open_issues
+family: maintenance
+role: staff
+interface_id: chat_sse
+steps:
+  - adapter: sse
+    ask: Which maintenance issues are still open?
+    gold_from:
+      oracle: busiest_room
+    request:
+      method: POST
+      path: /message
+      body:
+        message: Which maintenance issues are still open?
+    expect:
+      status: 200
+      events:
+        include: [done]
+      text_contains:
+        - ${gold.top_room}
+      free_text: Names the room with the most open maintenance issues

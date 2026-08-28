@@ -1,0 +1,23 @@
+schema_version: 1
+id: ws-poison-closes-with-1008
+title: A poisoned message closes the connection with policy code 1008
+feature_id: echo.stream.policy_close
+family: echo-negative
+role: member
+interface_id: echo_ws
+steps:
+  - adapter: websocket
+    label: Send the poisoned message
+    messages:
+      - at_ms: 0
+        data:
+          type: poison
+    listen_ms: 500
+    expect:
+      close_code: 1008
+      min_messages: 1
+      max_messages: 1
+      fields:
+        - path: type
+          equals: hello
+          message: 0

@@ -1,0 +1,31 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: tessa-api-ingress
+  labels:
+    app.kubernetes.io/name: tessa-api
+    app.kubernetes.io/component: api
+    app.kubernetes.io/part-of: tessa
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: tessa-api
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: tessa-worker
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: tessa-web
+      ports:
+        - protocol: TCP
+          port: 8000

@@ -1,0 +1,41 @@
+schema_version: 1
+id: ws-echo-roundtrip
+title: Member pings and sends text, the server answers in order
+feature_id: echo.stream.roundtrip
+family: echo-stream
+role: member
+interface_id: echo_ws
+steps:
+  - adapter: websocket
+    label: Hello, pong and echo
+    messages:
+      - at_ms: 0
+        data:
+          type: ping
+      - at_ms: 150
+        data: hello tessa
+    listen_ms: 600
+    expect:
+      min_messages: 3
+      max_messages: 3
+      fields:
+        - path: type
+          equals: hello
+          message: 0
+        - path: version
+          equals: 1
+          message: 0
+        - path: type
+          equals: pong
+          message: 1
+        - path: type
+          equals: echo
+          message: 2
+        - path: data
+          equals: hello tessa
+          message: 2
+      text_contains:
+        - hello tessa
+      latency:
+        max_first_byte_ms: 2000
+      free_text: A hello message, a pong and an echo of the text, in that order

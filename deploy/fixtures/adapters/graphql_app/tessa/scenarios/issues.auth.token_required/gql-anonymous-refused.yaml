@@ -1,0 +1,20 @@
+schema_version: 1
+id: gql-anonymous-refused
+title: A request without a token is answered with 401
+feature_id: issues.auth.token_required
+family: issues-negative
+role: viewer
+interface_id: graphql_api
+steps:
+  - adapter: graphql
+    as: anonymous
+    label: Query without a token
+    query: |
+      query {
+        viewer
+      }
+    expect:
+      status: 401
+      no_errors: false
+      error_contains:
+        - unauthenticated

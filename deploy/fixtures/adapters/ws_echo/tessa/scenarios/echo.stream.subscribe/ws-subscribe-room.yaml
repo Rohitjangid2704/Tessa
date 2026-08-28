@@ -1,0 +1,34 @@
+schema_version: 1
+id: ws-subscribe-room
+title: Member subscribes to room 20003 and receives the room update
+feature_id: echo.stream.subscribe
+family: echo-stream
+role: member
+interface_id: echo_ws
+steps:
+  - adapter: websocket
+    label: Subscribe to room 20003
+    messages:
+      - at_ms: 0
+        data:
+          type: subscribe
+          room: "20003"
+    listen_ms: 500
+    expect:
+      min_messages: 3
+      fields:
+        - path: type
+          equals: subscribed
+          message: 1
+        - path: room
+          equals: "20003"
+          message: 1
+        - path: type
+          equals: room_update
+          message: 2
+        - path: status
+          equals: dirty
+          message: 2
+      text_contains:
+        - subscribed
+        - room_update

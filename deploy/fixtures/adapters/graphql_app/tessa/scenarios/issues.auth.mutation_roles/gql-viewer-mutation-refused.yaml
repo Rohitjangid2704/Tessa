@@ -1,0 +1,28 @@
+schema_version: 1
+id: gql-viewer-mutation-refused
+title: Viewer is refused a mutation with a not authorized error
+feature_id: issues.auth.mutation_roles
+family: issues-negative
+role: viewer
+interface_id: graphql_api
+steps:
+  - adapter: graphql
+    label: Viewer tries to resolve an issue
+    operation_name: ResolveIssue
+    query: |
+      mutation ResolveIssue($id: ID!) {
+        resolveIssue(id: $id) {
+          id
+          status
+        }
+      }
+    variables:
+      id: "1"
+    expect:
+      status: 200
+      no_errors: false
+      error_contains:
+        - not authorized
+      fields:
+        - path: data
+          type: "null"

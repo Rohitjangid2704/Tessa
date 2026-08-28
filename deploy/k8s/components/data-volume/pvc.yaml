@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: tessa-data
+  labels:
+    app.kubernetes.io/name: tessa-data
+    app.kubernetes.io/component: storage
+    app.kubernetes.io/part-of: tessa
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 50Gi

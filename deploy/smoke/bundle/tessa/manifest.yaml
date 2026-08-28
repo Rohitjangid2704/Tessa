@@ -1,0 +1,211 @@
+schema: http://localhost:8000/schemas/bundle.v1.json
+target_token: tgt_smokesmokesmokesmokesm
+app:
+  name: Smoke Hotel
+  summary: >-
+    The Tessa fake target served from the truth_fixture Postgres database, used by the
+    Phase 0 smoke. A tiny hotel assistant that answers questions about rooms and maintenance
+    issues over a chat stream, serves the same data over a REST API, files maintenance issues
+    and has a login page and a chat page for a real browser. Seeds, oracles and end-state
+    checks read the same database the app writes to.
+  kind: llm_assistant
+  how_to_run: cd worker && uv run python -m tests.fake_target --port 8600 --database
+  health_endpoints:
+    - GET /health
+  ports: [8600]
+  base_paths: [/api, /api/chat]
+interfaces:
+  - id: chat_sse
+    kind: sse
+    base_path: /api/chat
+    auth:
+      type: bearer
+      header: Authorization
+      token_source:
+        staff: POST /api/auth/login with ${STAFF_EMAIL} and ${STAFF_PASSWORD}
+        manager: ${MANAGER_TOKEN}
+    health_endpoint: /health
+    shapes:
+      - name: send chat message
+        method: POST
+        path: /message
+        request_example:
+          message: Which maintenance issues are still open?
+        response_example:
+          answer: 3 maintenance issues are open across 2 rooms, most of them in room 20003.
+    stream_events: [token, tool_call, card, done]
+    rate_limits: none
+    idempotency: none
+  - id: api
+    kind: http
+    base_path: /api
+    auth:
+      type: bearer
+      header: Authorization
+      token_source:
+        staff: POST /api/auth/login with ${STAFF_EMAIL} and ${STAFF_PASSWORD}
+        manager: ${MANAGER_TOKEN}
+    health_endpoint: /health
+    shapes:
+      - name: list rooms
+        method: GET
+        path: /rooms
+        response_example:
+          items:
+            - number: "20001"
+              status: clean
+              floor: 2
+          total: 8
+      - name: create issue
+        method: POST
+        path: /issues
+        request_example:
+          room: "20004"
+          description: the window is cracked
+        response_example:
+          room: "20004"
+          description: the window is cracked
+          status: open
+  - id: browser
+    kind: browser
+    base_path: /
+    health_endpoint: /health
+roles:
+  - id: staff
+    level: 1
+    description: Front desk and housekeeping staff
+    can_see: [rooms, maintenance issues]
+    can_do: [ask questions, create maintenance issues]
+    credential_env: STAFF_PASSWORD
+  - id: manager
+    level: 2
+    description: Property manager
+    can_see: [rooms, maintenance issues]
+    can_do: [everything staff can do]
+    credential_env: MANAGER_TOKEN
+features:
+  - id: maintenance.read.open_issues
+    area: Maintenance
+    kind: read
+    description: List the maintenance issues that are still open and the rooms with the most
+    interfaces: [chat_sse, browser]
+    roles: [all]
+    examples:
+      - ask: Which maintenance issues are still open?
+        expected: The count of rooms with open issues and the room with the most, from the oracle
+        oracle: open_issues
+    invariants: [no_internal_ids]
+    confidence: high
+  - id: rooms.read.list
+    area: Rooms
+    kind: read
+    description: List the rooms through the REST API, optionally filtered by status
+    interfaces: [api]
+    roles: [all]
+    examples:
+      - request:
+          method: GET
+          path: /rooms?status=dirty
+        expected: Only the dirty rooms, as many as the oracle counts
+        oracle: dirty_rooms
+    confidence: high
+  - id: maintenance.write.create_issue
+    area: Maintenance
+    kind: write
+    description: File a maintenance issue for a room through the REST API
+    interfaces: [api]
+    roles: [staff, manager]
+    examples:
+      - request:
+          method: POST
+          path: /issues
+          body:
+            room: "20004"
+            description: the window is cracked
+        expected: A 201 and one new open issue row for the room in the database
+        oracle: issue_by_description
+    cleanup: the seed reset deletes the issues created by the suite
+    confidence: high
+    writes_to: issues
+  - id: auth.login.staff
+    area: Auth
+    kind: auth
+    description: A staff member signs in on the login page and reaches the chat
+    interfaces: [browser]
+    roles: [staff]
+    examples:
+      - ask: Sign in with the staff account
+        expected: The chat page opens and answers a question
+    confidence: high
+data_model:
+  stores:
+    - name: primary
+      kind: postgres
+      entities:
+        - name: rooms
+          key_fields: [id, number]
+          status_fields: [status]
+        - name: issues
+          key_fields: [id, room_id]
+          status_fields: [status]
+truth_sources:
+  - id: primary_db
+    kind: database
+    description: The truth_fixture database through the read-only role truth_ro
+    connection_env: TRUTH_DB_DSN
+    dialect: postgres
+seeds:
+  description: Eight rooms and five maintenance issues, restored by seeds/reset.sql
+  reset_script: seeds/reset.sql
+  hash_command: python seeds/hash.py
+  dsn_env: SEED_DB_DSN
+invariants:
+  - id: no_internal_ids
+    rule: Answers and API payloads never contain internal ids or session tokens
+    check: code
+    internal_id_patterns:
+      - '\bfake-session-[0-9a-f]{32}\b'
+environment:
+  - name: FAKE_TARGET_URL
+    kind: url
+    secret: false
+    required: true
+    purpose: Base URL of the fake target
+    interfaces: [chat_sse, api, browser]
+  - name: STAFF_EMAIL
+    kind: string
+    secret: false
+    required: true
+    purpose: Login email of the staff user
+    interfaces: [chat_sse, api, browser]
+  - name: STAFF_PASSWORD
+    kind: password
+    secret: true
+    required: true
+    purpose: Password of the staff user
+    interfaces: [chat_sse, api, browser]
+  - name: MANAGER_TOKEN
+    kind: token
+    secret: true
+    required: true
+    purpose: API token of the manager
+    interfaces: [chat_sse, api]
+  - name: TRUTH_DB_DSN
+    kind: dsn
+    secret: true
+    required: true
+    purpose: Read-only connection to the truth_fixture database
+  - name: SEED_DB_DSN
+    kind: dsn
+    secret: true
+    required: true
+    purpose: Write connection used by the seed reset script
+test_hooks:
+  available:
+    - id: health
+      description: Health probe
+      endpoint: GET /health
+limitations:
+  - The app is a test double, not a real product
+cleanup:
+  delete_after_run: [issues created by the suite]

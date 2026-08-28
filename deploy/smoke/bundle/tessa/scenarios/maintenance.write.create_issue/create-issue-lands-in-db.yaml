@@ -1,0 +1,31 @@
+schema_version: 1
+id: smoke-create-issue
+title: Filing an issue over the API stores one open row for the room
+feature_id: maintenance.write.create_issue
+family: write-happy
+role: staff
+interface_id: api
+steps:
+  - adapter: http
+    label: Staff files an issue for room 20004
+    request:
+      method: POST
+      path: /issues
+      body:
+        room: "20004"
+        description: smoke check the window is cracked
+    expect:
+      status: [201]
+      fields:
+        - path: status
+          equals: open
+    expect_db:
+      oracle: issue_by_description
+      params:
+        description: smoke check the window is cracked
+      expect:
+        row_count: 1
+        first_row:
+          room: "20004"
+          status: open
+      retry_for_seconds: 5

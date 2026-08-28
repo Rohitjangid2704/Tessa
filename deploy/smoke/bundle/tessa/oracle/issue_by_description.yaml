@@ -1,0 +1,15 @@
+name: issue_by_description
+feature_ids: [maintenance.write.create_issue]
+language: sql
+truth_source: primary_db
+params_schema:
+  type: object
+  properties:
+    description:
+      type: string
+  required: [description]
+sentence_template: >-
+  {{ rows | length }} issues have that description.
+gold_points:
+  - key: matching_issues
+    expression: rows | length

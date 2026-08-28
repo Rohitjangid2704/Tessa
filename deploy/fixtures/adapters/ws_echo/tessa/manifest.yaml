@@ -1,0 +1,117 @@
+schema: http://localhost:8000/schemas/bundle.v1.json
+target_token: tgt_wsechofixture222222222
+app:
+  name: WebSocket Echo Fixture
+  summary: >-
+    A tiny WebSocket server used to test the Tessa websocket adapter. It greets every
+    authorised connection with a hello message, answers pings, subscriptions and plain text
+    with deterministic JSON messages, and closes with policy code 1008 on a poisoned message
+    or when the bearer token is missing.
+  kind: api
+  how_to_run: >-
+    From the deploy folder: uv run --project ../worker python -m fixtures.adapters.ws_echo
+    --port 8520
+  health_endpoints:
+    - GET /health
+  ports: [8520]
+  base_paths: [/ws]
+interfaces:
+  - id: echo_ws
+    kind: websocket
+    base_path: /ws
+    auth:
+      type: bearer
+      header: Authorization
+      token_source:
+        member: ${WS_ECHO_TOKEN}
+    health_endpoint: /health
+    shapes:
+      - name: echo session
+        path: /
+        request_example:
+          type: ping
+        response_example:
+          type: pong
+          seq: 1
+    stream_events: [hello, pong, echo, subscribed, room_update, bye, error]
+    rate_limits: none
+    idempotency: none
+roles:
+  - id: member
+    level: 1
+    description: A connected client holding the fixture token
+    can_see: [room status updates]
+    can_do: [ping, subscribe to a room, send text]
+    credential_env: WS_ECHO_TOKEN
+features:
+  - id: echo.stream.roundtrip
+    area: Echo
+    kind: stream
+    description: The server greets a new connection and answers pings and plain text in order
+    interfaces: [echo_ws]
+    roles: [member]
+    examples:
+      - request:
+          messages:
+            - type: ping
+            - hello tessa
+        expected: A hello message, a pong and an echo of the text, in that order
+    confidence: high
+  - id: echo.stream.subscribe
+    area: Echo
+    kind: stream
+    description: A client subscribes to a room and receives the confirmation and one room update
+    interfaces: [echo_ws]
+    roles: [member]
+    examples:
+      - request:
+          messages:
+            - type: subscribe
+              room: "20003"
+        expected: A subscribed message followed by a room update with status dirty
+    confidence: high
+  - id: echo.auth.token_required
+    area: Echo
+    kind: auth
+    description: A connection without the bearer token is closed with policy code 1008
+    interfaces: [echo_ws]
+    roles: [member]
+    examples:
+      - request:
+          messages: []
+        expected: No messages and close code 1008
+    confidence: high
+  - id: echo.stream.policy_close
+    area: Echo
+    kind: stream
+    description: A poisoned message makes the server close the connection with code 1008
+    interfaces: [echo_ws]
+    roles: [member]
+    examples:
+      - request:
+          messages:
+            - type: poison
+        expected: A hello message and then close code 1008
+    confidence: high
+invariants: []
+environment:
+  - name: WS_ECHO_URL
+    kind: url
+    secret: false
+    required: true
+    purpose: Origin of the websocket echo fixture, ws or wss
+    interfaces: [echo_ws]
+  - name: WS_ECHO_TOKEN
+    kind: token
+    secret: true
+    required: true
+    purpose: Bearer token the fixture accepts on the websocket handshake
+    interfaces: [echo_ws]
+test_hooks:
+  available:
+    - id: health
+      description: Health probe
+      endpoint: GET /health
+limitations:
+  - Only text frames are supported; a binary frame closes the connection with code 1003
+  - Messages longer than 4096 characters close the connection with code 1009
