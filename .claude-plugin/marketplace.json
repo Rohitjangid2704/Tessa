@@ -1,0 +1,13 @@
+{
+  "name": "tessa",
+  "owner": {
+    "name": "Rohit Jangid"
+  },
+  "plugins": [
+    {
+      "name": "tessa",
+      "source": "./plugin",
+      "description": "Drive the Tessa QA harness from Claude Code: connect, discover a target, run scenarios, explain and fix findings."
+    }
+  ]
+}

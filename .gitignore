@@ -34,5 +34,8 @@ api/data/
 !plugin/routines/*.md
 !**/tessa/README.md
 planning-notes/
-docs/
 !api/tests/fixtures/**/README.md
+!/README.md
+!/CONTRIBUTING.md
+!/SECURITY.md
+!docs/**/*.md
