@@ -39,3 +39,4 @@ planning-notes/
 !/CONTRIBUTING.md
 !/SECURITY.md
 !docs/**/*.md
+!.github/**/*.md

@@ -1,0 +1,45 @@
+name: Bug report
+description: Something does not install, start or behave as the docs say
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. ...
+        2. ...
+    validations:
+      required: true
+  - type: dropdown
+    id: part
+    attributes:
+      label: Part of Tessa
+      options:
+        - Install or setup
+        - API
+        - Worker or runs
+        - Web app
+        - Claude Code plugin
+        - Docs
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or error output
+      description: Remove tokens, passwords and other secrets first.
+      render: shell
+  - type: input
+    id: env
+    attributes:
+      label: Environment
+      placeholder: macOS 15, Docker 27, uv 0.8, Node 24

@@ -1,6 +1,17 @@
 # Tessa
 
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+![Python 3.13](https://img.shields.io/badge/python-3.13-3776AB.svg)
+![Node 22+](https://img.shields.io/badge/node-22%2B-339933.svg)
+![Next.js 16](https://img.shields.io/badge/Next.js-16-black.svg)
+![Temporal](https://img.shields.io/badge/workflows-Temporal-141414.svg)
+![Status: experimental](https://img.shields.io/badge/status-experimental-orange.svg)
+
 **Tessa is an open-source QA harness that tests your app from the outside, with Claude Code as the engineer who knows your code.**
+
+Point Tessa at a QA deployment of any web app or API. Claude Code reads your repo and tells Tessa what the app does. Tessa then plans the tests, runs them through real HTTP calls and a real browser you can watch live, grades every step and hands the failures back to Claude Code to explain and fix.
+
+**Contents:** [What it does](#what-it-does) · [How it works](#how-it-works) · [Quick start](#quick-start) · [Documentation](#documentation) · [Contributing](#contributing) · [License](#license)
 
 Tessa calls your app the way a user or client would: HTTP requests, streams, webhooks, WebSockets, GraphQL and a real browser you can watch live. It plans the tests, runs them, grades every step and reports what broke. It never needs access to your source code. The repo-aware work (reading the code, writing test bundles, explaining failures, fixing bugs) is done by Claude Code on your own machine.
 
